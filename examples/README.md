@@ -8,20 +8,56 @@ Runnable TypeScript examples demonstrating common SDK patterns. All examples tar
 # Install all workspace dependencies first
 pnpm install
 
-# Run any example with tsx (no build step needed)
-npx tsx examples/<example-name>.ts
+# Run any example with pnpm exec tsx (resolves workspace packages correctly)
+pnpm exec tsx examples/<example-name>.ts
 ```
+
+## どれを選べばいいか
+
+| 状況 | 使うファイル |
+|---|---|
+| アクセストークンをすでに持っている（Sunabar ポータル等で取得済み） | `balance-check.ts` |
+| ブラウザでログインして OAuth フローを通したい | `oauth-callback-server.ts` |
+| 取引明細を全件取得したい | `transactions-iterate.ts` |
+| 給与振込バッチを実行したい | `payroll-batch.ts` |
+| Webhook 署名検証サーバーを立てたい | `webhook-express.ts` |
+| 認証情報なしで SDK の動作確認だけしたい | `sunabar-dry-run.ts` |
+
+---
 
 ## Examples
 
-### `balance-check.ts`
+### `balance-check.ts` — トークン直接使用（最も簡単）
 
-Fetches the current book and available balance for a single account.
+すでにアクセストークンを持っている場合の最短パターン。
 
-**Env vars:** `GMO_CLIENT_ID`, `GMO_ACCOUNT_ID`, `GMO_ACCESS_TOKEN`
+**Env vars:** `GMO_ACCESS_TOKEN`, `GMO_ACCOUNT_ID`, `GMO_CLIENT_ID`（任意）
 
 ```bash
-GMO_ACCESS_TOKEN=your-sunabar-token GMO_ACCOUNT_ID=your-account-id npx tsx examples/balance-check.ts
+GMO_ACCESS_TOKEN=your-sunabar-token \
+GMO_ACCOUNT_ID=your-account-id \
+pnpm exec tsx examples/balance-check.ts
+```
+
+---
+
+### `oauth-callback-server.ts` — 完全な OAuth ログインフロー
+
+ブラウザで GMO Aozora にログインする OAuth 2.0 PKCE フローの完全実装。
+1. `http://localhost:8080/login` にアクセスして認可画面へリダイレクト
+2. ログイン後にコールバックを受け取ってトークン交換
+3. 残高を取得して表示
+
+**Env vars:** `GMO_CLIENT_ID`, `GMO_CLIENT_SECRET`, `GMO_ACCOUNT_ID`
+
+> 開発者ポータルに Redirect URI `http://localhost:8080/callback` を登録してください。
+
+```bash
+GMO_CLIENT_ID=xxx \
+GMO_CLIENT_SECRET=yyy \
+GMO_ACCOUNT_ID=zzz \
+pnpm exec tsx examples/oauth-callback-server.ts
+# → ブラウザで http://localhost:8080/login を開く
 ```
 
 ---
@@ -30,10 +66,12 @@ GMO_ACCESS_TOKEN=your-sunabar-token GMO_ACCOUNT_ID=your-account-id npx tsx examp
 
 Streams all transactions for an account using `for await...of`. Handles cursor-based pagination (`nextItemKey`) transparently.
 
-**Env vars:** `GMO_CLIENT_ID`, `GMO_ACCOUNT_ID`, `GMO_ACCESS_TOKEN`, `GMO_DATE_FROM` (optional), `GMO_DATE_TO` (optional)
+**Env vars:** `GMO_ACCESS_TOKEN`, `GMO_ACCOUNT_ID`, `GMO_DATE_FROM` (optional), `GMO_DATE_TO` (optional)
 
 ```bash
-GMO_ACCESS_TOKEN=your-token GMO_ACCOUNT_ID=your-id npx tsx examples/transactions-iterate.ts
+GMO_ACCESS_TOKEN=your-token \
+GMO_ACCOUNT_ID=your-id \
+pnpm exec tsx examples/transactions-iterate.ts
 ```
 
 ---
@@ -61,7 +99,7 @@ Express server that receives `va-deposit-transaction` webhook events:
 **Env vars:** `WEBHOOK_SECRET`, `PORT` (optional, default 3000)
 
 ```bash
-WEBHOOK_SECRET=your-hmac-secret npx tsx examples/webhook-express.ts
+WEBHOOK_SECRET=your-hmac-secret pnpm exec tsx examples/webhook-express.ts
 ```
 
 Test with curl (see file header for the full test command).
@@ -77,20 +115,12 @@ network calls. Pass `--execute-readonly` together with `GMO_ACCESS_TOKEN`
 and `GMO_ACCOUNT_ID` to perform a single read-only `accounts.list` and
 `balances.get` call.
 
-**Dry run (no network):**
-
 ```bash
-npx tsx examples/sunabar-dry-run.ts
-```
+# 認証情報不要のドライラン
+pnpm sunabar:dry-run
 
-**Read-only execution (Sunabar):**
-
-```bash
-GMO_CLIENT_ID=... \
-GMO_CLIENT_SECRET=... \
-GMO_ACCESS_TOKEN=... \
-GMO_ACCOUNT_ID=... \
-npx tsx examples/sunabar-dry-run.ts --execute-readonly
+# 実際に API を呼ぶ（read-only）
+GMO_ACCESS_TOKEN=... GMO_ACCOUNT_ID=... pnpm sunabar:readonly
 ```
 
 This example never persists tokens to disk and never logs raw secrets.
@@ -98,7 +128,7 @@ This example never persists tokens to disk and never logs raw secrets.
 ## Type-checking examples
 
 ```bash
-pnpm exec tsc --project examples/tsconfig.json
+pnpm examples:typecheck
 ```
 
 ## Notes

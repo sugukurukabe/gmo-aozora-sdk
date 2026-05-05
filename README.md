@@ -34,39 +34,90 @@
 
 ## Quick start
 
-```bash
-npm install @sugukuru/gmo-aozora-sdk
+> **npm は近日公開予定です。** 現在は GitHub から直接インストールしてください:
+>
+> ```bash
+> npm install sugukurukabe/gmo-aozora-sdk
+> ```
+>
+> npm リリース後は `npm install @sugukuru/gmo-aozora-sdk` でインストールできます。
+
+---
+
+### パターン A: すでにアクセストークンを持っている（スクリプト・検証用）
+
+Sunabar のポータルや `pnpm sunabar:auth` で取得したトークンをそのまま使えます。
+
+```typescript
+import {
+  GmoAozoraClient,
+  InMemoryTokenStorage,
+  parseAmount,
+} from "@sugukuru/gmo-aozora-sdk";
+
+// 1. トークンをストレージにセット
+const storage = new InMemoryTokenStorage();
+await storage.save("me", {
+  accessToken: process.env.GMO_ACCESS_TOKEN!,
+  refreshToken: "",                          // リフレッシュ不要なら空文字
+  expiresAt: Date.now() + 3_600_000,        // 1時間後
+  tokenType: "Bearer",
+  scope: "private:account",
+});
+
+// 2. クライアント初期化
+const client = new GmoAozoraClient({
+  environment: "sunabar",                   // "sunabar" | "staging" | "production"
+  clientId: process.env.GMO_CLIENT_ID!,
+  clientSecret: process.env.GMO_CLIENT_SECRET!,
+  redirectUri: "http://localhost:8080/callback",
+  tokenStorage: storage,
+}).useUser("me");                            // "me" は任意の識別子
+
+// 3. API 呼び出し
+const balance = await client.corporation.balances.get(
+  process.env.GMO_ACCOUNT_ID!,             // 口座番号（数字のみ、12桁など）
+);
+console.log(`残高: ¥${parseAmount(balance?.bookBalance ?? "0").toLocaleString()}`);
 ```
+
+> **`useUser(userId)` とは?**
+> `userId` はトークンを識別するためのキーです（任意の文字列）。
+> スクリプトなら `"me"`、Webアプリなら DB のユーザー ID を渡します。
+
+---
+
+### パターン B: OAuth 2.0 PKCE でログインフローを実装する（Web アプリ向け）
 
 ```typescript
 import { GmoAozoraClient, PRIVATE_SCOPES } from "@sugukuru/gmo-aozora-sdk";
 
-const client = new GmoAozoraClient({
+const app = new GmoAozoraClient({
   environment: "sunabar",
   clientId: process.env.GMO_CLIENT_ID!,
   clientSecret: process.env.GMO_CLIENT_SECRET!,
   redirectUri: "https://app.example.com/callback",
   defaultScopes: [PRIVATE_SCOPES.ACCOUNT, PRIVATE_SCOPES.OFFLINE_ACCESS],
-}).useUser("user-123");
+});
 
-const balance = await client.corporation.balances.get("123456789012");
-console.log(balance?.bookBalance); // string amount, e.g. "100000"
-```
+// --- ① ログインボタンを押したとき ---
+const { url, session } = app.buildAuthorizationUrl();
+// `session` (codeVerifier + state) をHTTPセッションやDBに一時保存する
+// ユーザーを `url` にリダイレクト
 
-### Fetch account balance
+// --- ② コールバック URL を受け取ったとき (/callback?code=...&state=...) ---
+const user = app.useUser("user-123");             // DBのユーザーIDなど
+await user.exchangeCode({
+  code: req.query.code,                           // コールバックの code
+  state: req.query.state,                         // コールバックの state
+  session,                                        // ①で保存した session
+});
 
-```typescript
-const user = new GmoAozoraClient({
-  environment: "sunabar",
-  clientId: process.env.GMO_CLIENT_ID!,
-  clientSecret: process.env.GMO_CLIENT_SECRET!,
-  redirectUri: "https://app.example.com/callback",
-}).useUser("user-123");
-
-// After OAuth callback and exchangeCode():
+// --- ③ 以降は通常通り使う（トークンは自動リフレッシュ） ---
 const balance = await user.corporation.balances.get("123456789012");
-console.log(balance?.bookBalance); // "100000" (string; use parseAmount() for bigint)
 ```
+
+完全な Express サーバー実装例 → [`examples/oauth-callback-server.ts`](examples/oauth-callback-server.ts)
 
 ### Paginate all transactions (auto-paging)
 
@@ -141,15 +192,19 @@ const result = await user.corporation.transfers.create(input);
 
 See the [`examples/`](examples/) directory for runnable scripts:
 
-- [`balance-check.ts`](examples/balance-check.ts) — fetch and display account balance
+- [`balance-check.ts`](examples/balance-check.ts) — fetch and display account balance **（パターン A: トークン直接使用）**
+- [`oauth-callback-server.ts`](examples/oauth-callback-server.ts) — full OAuth login flow with Express **（パターン B: ブラウザログイン）**
 - [`transactions-iterate.ts`](examples/transactions-iterate.ts) — stream transactions with `for await...of`
 - [`payroll-batch.ts`](examples/payroll-batch.ts) — full payroll flow with Zengin file + bulk transfer + poll
 - [`webhook-express.ts`](examples/webhook-express.ts) — Express server with webhook verification
 - [`sunabar-dry-run.ts`](examples/sunabar-dry-run.ts) — credential-safe Sunabar validation harness
 
 ```bash
-npx tsx examples/balance-check.ts
-npx tsx examples/sunabar-dry-run.ts
+# パターン A: トークンをセットして即実行
+GMO_ACCESS_TOKEN=xxx GMO_ACCOUNT_ID=yyy pnpm exec tsx examples/balance-check.ts
+
+# パターン B: ブラウザ OAuth フロー
+GMO_CLIENT_ID=xxx GMO_CLIENT_SECRET=yyy pnpm exec tsx examples/oauth-callback-server.ts
 ```
 
 ## Why not the official SDK?
