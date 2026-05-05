@@ -50,6 +50,25 @@ function summarizeAccounts(
   }));
 }
 
+function summarizeBalance(balance: Record<string, unknown> | undefined): Record<string, unknown> {
+  if (!balance) {
+    return { returned: false };
+  }
+
+  const bookBalance = typeof balance['bookBalance'] === 'string' ? balance['bookBalance'] : undefined;
+  const availableBalance =
+    typeof balance['availableBalance'] === 'string' ? balance['availableBalance'] : undefined;
+
+  return {
+    returned: true,
+    keys: Object.keys(balance),
+    accountId: balance['accountId'],
+    bookBalance: bookBalance ? parseAmount(bookBalance).toString() : 'not returned',
+    availableBalance: availableBalance ? parseAmount(availableBalance).toString() : 'not returned',
+    balanceDate: balance['balanceDate'] ?? 'not returned',
+  };
+}
+
 const resolvedClientId = clientId ?? 'DRY_RUN_CLIENT_ID';
 const resolvedClientSecret = clientSecret ?? 'DRY_RUN_CLIENT_SECRET';
 
@@ -135,5 +154,5 @@ try {
 console.log('Readonly Sunabar checks completed:', {
   accountCount: accounts.length,
   accountId: readonlyAccountId,
-  bookBalance: balance ? parseAmount(balance.bookBalance).toString() : 'not returned',
+  balance: summarizeBalance(balance),
 });

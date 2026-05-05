@@ -44,9 +44,9 @@ export const BalanceSchema = z
   .object({
     accountId: z.string(),
     /** Monetary amount as string — use parseAmount() to convert to bigint. */
-    bookBalance: z.string(),
-    availableBalance: z.string(),
-    balanceDate: z.string(),
+    bookBalance: z.string().optional(),
+    availableBalance: z.string().optional(),
+    balanceDate: z.string().optional(),
   })
   .passthrough();
 

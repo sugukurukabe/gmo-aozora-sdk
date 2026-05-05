@@ -47,12 +47,12 @@ if (!balance) {
   process.exit(0);
 }
 
-const book = parseAmount(balance.bookBalance);
-const available = parseAmount(balance.availableBalance);
+const book = parseAmount(balance.bookBalance ?? '0');
+const available = parseAmount(balance.availableBalance ?? '0');
 
 console.log('Account Balance Report');
 console.log('======================');
 console.log(`Account ID   : ${balance.accountId}`);
-console.log(`Balance Date : ${balance.balanceDate}`);
+console.log(`Balance Date : ${balance.balanceDate ?? 'not returned'}`);
 console.log(`Book Balance : ¥${book.toLocaleString()}`);
 console.log(`Available    : ¥${available.toLocaleString()}`);
