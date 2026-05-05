@@ -90,8 +90,10 @@ await storage.save(userId, {
 
 const readonlyClient = new GmoAozoraClient({
   environment: 'sunabar',
-  clientId: requireEnv('GMO_CLIENT_ID', clientId),
-  clientSecret: requireEnv('GMO_CLIENT_SECRET', clientSecret),
+  clientId: clientId ?? 'SUNABAR_PORTAL_USER',
+  // For portal-issued tokens, clientSecret is not used for token refresh.
+  // Fall back to a placeholder so the constructor is satisfied.
+  clientSecret: clientSecret ?? 'PORTAL_TOKEN_NO_REFRESH_NEEDED',
   redirectUri,
   defaultScopes: [PRIVATE_SCOPES.ACCOUNT, PRIVATE_SCOPES.OFFLINE_ACCESS],
   tokenStorage: storage,
