@@ -1,0 +1,107 @@
+---
+description: Corporation API client rules — accounts, balances, transactions, virtual accounts, transfers, bulk transfers
+alwaysApply: false
+globs:
+  - "packages/core/src/corporation/**"
+---
+
+# Corporation API
+
+## Path Prefix
+
+All corporation API endpoints use: `/ganb/api/corporation/v1/`
+
+The `HttpClient` prepends this automatically — pass only the relative path from
+`/ganb/api/corporation/v1/` onward (e.g. `/transfer/request`, not the full URL).
+
+## Endpoints (v1.8.0 scope)
+
+### Account / Balance / Transaction
+
+| Resource | Method | Path |
+|---|---|---|
+| Accounts list | GET | `/accounts` |
+| Balance | GET | `/accounts/balances` |
+| Transactions | GET | `/accounts/transactions` |
+
+### Virtual Accounts (振込入金口座)
+
+| Resource | Method | Path |
+|---|---|---|
+| VA list | GET | `/virtual-accounts` |
+| VA create | POST | `/virtual-accounts` |
+| VA status update | PATCH | `/virtual-accounts/{vaId}` |
+| VA transactions | GET | `/virtual-accounts/{vaId}/transactions` |
+
+### Single Transfers (振込依頼)
+
+| Resource | Method | Path |
+|---|---|---|
+| Create transfer | POST | `/transfer/request` |
+| Transfer status | GET | `/transfer/status` |
+| Transfer result | GET | `/transfer/request-result` |
+| Transfer fee | POST | `/transfer/transferfee` |
+| Cancel transfer | POST | `/transfer/cancel` |
+
+### Bulk Transfers (総合振込依頼)
+
+| Resource | Method | Path |
+|---|---|---|
+| Create bulk transfer | POST | `/bulktransfer/request` |
+| Bulk transfer status | GET | `/bulktransfer/status` |
+| Bulk transfer result | GET | `/bulktransfer/request-result` |
+| Bulk transfer fee | POST | `/bulktransfer/transferfee` |
+| Cancel bulk transfer | POST | `/bulktransfer/cancel` |
+
+> NOTE: GMO Aozora uses verb-based paths (`/transfer/request`, `/bulktransfer/cancel`)
+> NOT REST-style resource paths (`/transfers/{id}`). Never use the REST-style pattern.
+
+## Field Types
+
+- `amount`: always string (`"5800"`) — use `parseAmount()` → bigint
+- `accountId`: string, 12–29 digits
+- `applyNo`: 16-digit numeric string (振込申請番号)
+- `nextItemKey`: pagination token (string), present when more records exist
+- `resultCode`: `'1'`=完了, `'2'`=未完了, `'8'`=期限切れ
+
+## Pagination Pattern
+
+Use the async iterator for transaction listing:
+
+```typescript
+for await (const tx of client.corporation.transactions.iterate({
+  accountId,
+  dateFrom: '2026-04-01',
+  dateTo: '2026-04-30',
+})) {
+  // automatic pagination via nextItemKey
+}
+```
+
+Never implement manual `while (nextItemKey)` loops in application code.
+
+## Transfer pollResult (production helper)
+
+Both single and bulk transfers can return `resultCode === '2'` (still processing).
+Use the built-in `pollResult` helper instead of polling manually:
+
+```typescript
+// Single transfer (up to 99 items)
+const result = await client.corporation.transfers.pollResult(
+  { accountId, applyNo },
+  { intervalMs: 3_000, timeoutMs: 60_000 },
+);
+
+// Bulk transfer (up to 9,999 items)
+const result = await client.corporation.bulkTransfers.pollResult(
+  { accountId, applyNo },
+  { intervalMs: 60_000, timeoutMs: 7_200_000 },
+);
+```
+
+`pollResult` throws `GmoAozoraTimeoutError` when `timeoutMs` is exceeded.
+
+## Error Handling
+
+Map API error codes from the response body to typed error classes.
+Always include the API error code, message, and `requestId` in the error.

@@ -1,0 +1,82 @@
+---
+description: Webhook verification rules for @sugukuru/gmo-aozora-webhook
+alwaysApply: false
+globs:
+  - "packages/webhook/**"
+---
+
+# Webhook
+
+## HMAC-SHA256 Verification
+
+```typescript
+import { timingSafeEqual, createHmac } from 'node:crypto';
+
+function verify(rawBody: Buffer, signature: string, secret: string): boolean {
+  const expected = createHmac('sha256', secret).update(rawBody).digest();
+  const actual = Buffer.from(signature, 'base64');
+  if (expected.length !== actual.length) return false;
+  return timingSafeEqual(expected, actual); // constant-time comparison
+}
+```
+
+NEVER use `===` or `==` for signature comparison — timing attack vector.
+NEVER use the parsed JSON body for HMAC — use the raw `Buffer` before parsing.
+
+## Raw Body Requirement
+
+The raw request body (as `Buffer`) must be read before any JSON parsing:
+
+```typescript
+// Express
+app.use('/webhook', express.raw({ type: 'application/json' }));
+
+// Hono
+app.post('/webhook', async (c) => {
+  const rawBody = Buffer.from(await c.req.arrayBuffer());
+  // ...
+});
+```
+
+If the framework has already parsed the body, the signature cannot be verified.
+Always configure the framework to deliver the raw buffer to the webhook handler.
+
+## Signature Header
+
+GMO Aozora sends the signature in a configurable header. The verifier must
+accept the header name as a parameter (never hardcode):
+
+```typescript
+const verifier = createWebhookVerifier({
+  signatureHeader: 'x-webhook-signature', // GMO default, but configurable
+  algorithm: 'sha256',
+  secret: process.env.WEBHOOK_SECRET!,
+});
+```
+
+This keeps the package usable for other banks with different header names.
+
+## Event Types
+
+Current event: `va-deposit-transaction` (virtual account deposit received)
+
+NEVER assume additional event types or hardcode event-type-specific logic
+in the webhook package. Event dispatch belongs in the consumer's application.
+
+## Framework Adapters
+
+Provide adapters for Express, Hono, and Fastify. Each adapter:
+1. Extracts the raw body buffer
+2. Extracts the signature header value
+3. Calls `verifier.verify(rawBody, signature)` — throws on failure
+4. Calls `next()` / passes to the handler with parsed `event` attached
+
+## Idempotency
+
+Log the `x-request-id` from the webhook request. Consumers should deduplicate
+events by this ID to handle GMO's at-least-once delivery guarantee.
+
+## Error Classes
+
+- `GmoAozoraWebhookSignatureError` — HMAC verification failed
+- `GmoAozoraWebhookParseError` — valid signature but invalid JSON body

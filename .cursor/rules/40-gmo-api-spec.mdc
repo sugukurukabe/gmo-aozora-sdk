@@ -1,0 +1,157 @@
+---
+description: GMO Aozora Open API specification reference — endpoints, headers, error codes
+alwaysApply: false
+---
+
+# GMO Aozora API Specification Reference
+
+Invoke `@gmo-spec` when you need authoritative information about endpoints,
+request/response shapes, or error codes.
+
+## API Base URLs
+
+| Environment | Base URL |
+|---|---|
+| sunabar (sandbox) | `https://sandbox.apigateway.prod.gmo-aozora.com` |
+| staging | `https://stg-api.gmo-aozora.com` |
+| production | `https://api.gmo-aozora.com` |
+
+API path prefix: `/ganb/api/corporation/v1/`
+
+## Common Headers
+
+```
+x-access-token: <accessToken>              // Required for all protected endpoints
+Accept: application/json;charset=UTF-8    // Required
+Content-Type: application/json;charset=UTF-8  // Required for POST/PUT/PATCH
+x-request-id: <uuidv7>                    // Optional but strongly recommended
+```
+
+## Authentication (OAuth 2.0 + PKCE S256)
+
+```
+Authorization endpoint: /ganb/api/auth/v1/authorization
+Token endpoint:         POST /ganb/api/auth/v1/token
+Revoke endpoint:        POST /ganb/api/auth/v1/tokens/revoke
+```
+
+Scopes:
+- `private:account` — read account/balance/transactions
+- `private:transfer` — create transfers
+- `private:offline_access` — get refresh token
+
+## Corporation API Endpoints
+
+> IMPORTANT: GMO Aozora uses verb-based paths, NOT REST-style resource paths.
+> `/transfer/request` is correct. `/transfers/{id}` is WRONG.
+
+### Account Information
+
+```
+GET /ganb/api/corporation/v1/accounts
+  Response: { accounts: Array<Account> }
+
+GET /ganb/api/corporation/v1/accounts/balances
+  Query: accountId
+  Response: { balances: Array<{ accountId, bookBalance, availableBalance, balanceDate }> }
+
+GET /ganb/api/corporation/v1/accounts/transactions
+  Query: accountId, dateFrom (YYYY-MM-DD), dateTo, nextItemKey
+  Response: { transactions: Array<Transaction>, nextItemKey?: string }
+```
+
+### Virtual Accounts
+
+```
+GET /ganb/api/corporation/v1/virtual-accounts
+  Response: { virtualAccounts: Array<VirtualAccount>, nextItemKey?: string }
+
+POST /ganb/api/corporation/v1/virtual-accounts
+  Response: { virtualAccount: VirtualAccount }
+
+PATCH /ganb/api/corporation/v1/virtual-accounts/{vaId}
+  Body: { status }
+  Response: { virtualAccount: VirtualAccount }
+```
+
+### Single Transfers (振込依頼)
+
+```
+POST /ganb/api/corporation/v1/transfer/request
+  Body: TransferCreateInput
+  Response: { accountId, resultCode, applyNo, applyEndDatetime? }
+
+GET /ganb/api/corporation/v1/transfer/status
+  Query: accountId, queryKeyClass, applyNo?, dateFrom?, dateTo?, nextItemKey?
+  Response: { accountId, transferStatusList: Array<TransferStatusItem>, nextItemKey? }
+
+GET /ganb/api/corporation/v1/transfer/request-result
+  Query: accountId, applyNo
+  Response: { accountId, resultCode, applyNo, applyEndDatetime? }
+
+POST /ganb/api/corporation/v1/transfer/transferfee
+  Body: TransferCreateInput
+  Response: { accountId, baseDate, baseTime, totalFee, transferFeeDetails }
+
+POST /ganb/api/corporation/v1/transfer/cancel
+  Body: { accountId, cancelTargetKeyClass, applyNo }
+  Response: { accountId, resultCode, applyNo, applyEndDatetime? }
+```
+
+### Bulk Transfers (総合振込依頼)
+
+```
+POST /ganb/api/corporation/v1/bulktransfer/request
+  Body: BulkTransferCreateInput
+  Response: { accountId, resultCode, applyNo, applyEndDatetime? }
+
+GET /ganb/api/corporation/v1/bulktransfer/status
+  Query: accountId, queryKeyClass, applyNo?, dateFrom?, dateTo?, nextItemKey?
+  Response: { accountId, transferStatusList: Array<BulkTransferStatusItem>, nextItemKey? }
+
+GET /ganb/api/corporation/v1/bulktransfer/request-result
+  Query: accountId, applyNo
+  Response: { accountId, resultCode, applyNo, applyEndDatetime? }
+
+POST /ganb/api/corporation/v1/bulktransfer/transferfee
+  Body: BulkTransferCreateInput
+  Response: { accountId, baseDate, baseTime, totalFee, transferFeeDetails }
+
+POST /ganb/api/corporation/v1/bulktransfer/cancel
+  Body: { accountId, cancelTargetKeyClass, applyNo }
+  Response: { accountId, resultCode, applyNo, applyEndDatetime? }
+```
+
+## Field Conventions
+
+- Amounts: strings, e.g. `"5800"` (never numbers)
+- Dates: `YYYY-MM-DD` strings
+- Timestamps: ISO 8601 strings
+- Account IDs: strings, 12–29 digits
+- Apply numbers: 16-digit numeric strings
+- Bank codes: 4-digit strings, e.g. `"0310"` for GMO Aozora
+- Branch codes: 3-digit strings
+- Account numbers: 7-digit strings (zero-padded)
+
+## Result Codes
+
+- `'1'` = 完了 (completed successfully)
+- `'2'` = 未完了 (still processing — poll `/request-result`)
+- `'8'` = 期限切れ (expired — no longer available)
+
+## Common Error Codes
+
+| HTTP Status | GMO Error Code | Meaning |
+|---|---|---|
+| 400 | `INVALID_PARAMETER` | Bad request parameters |
+| 401 | `UNAUTHORIZED` | Token invalid/expired |
+| 403 | `FORBIDDEN` | Insufficient scope |
+| 404 | `NOT_FOUND` | Resource not found |
+| 409 | `CONFLICT` | Duplicate request ID |
+| 429 | `TOO_MANY_REQUESTS` | Rate limit exceeded |
+| 500 | `INTERNAL_SERVER_ERROR` | Server error (retry) |
+
+## Spec Versions
+
+This file covers API spec **v1.8.0**. If GMO releases a new spec version,
+update the schemas and this reference, then bump the SDK minor version.

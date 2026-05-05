@@ -1,0 +1,85 @@
+---
+description: Testing conventions for @sugukuru/gmo-aozora-sdk monorepo
+alwaysApply: false
+globs:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.spec.ts"
+---
+
+# Testing
+
+## Framework
+
+Vitest only. Never use Jest — the configs are different and pnpm workspace
+requires a single test runner.
+
+## Test Coverage Requirements
+
+For every new function or class:
+- At least one happy-path test
+- At least one failure-mode test (invalid input, API error, network error)
+- Edge cases: empty arrays, maximum amounts, null vs undefined, boundary dates
+
+## Test Naming Conventions
+
+Use descriptive names in domain language. Japanese names are encouraged where
+they improve clarity:
+
+```typescript
+// ✅ Clear domain language
+it('特例期間中（適法）の場合、給与振込を実行する', async () => { ... });
+
+// ✅ Regression guard with reason
+it("rejects shorui '21' at compile time (regression: was Day 1 bug)", () => {
+  // @ts-expect-error — shorui must be '11' | '12'
+  generateZenginFile({ shorui: '21' as never });
+});
+
+// ❌ Vague
+it('works', () => { ... });
+it('test 1', () => { ... });
+```
+
+## Fixtures Organization
+
+Banking test fixtures in `fixtures/{bank-name}-sample-{purpose}.dat`.
+Each fixture file must begin with a comment citing the source:
+
+```
+// Source: 全銀協標準通信プロトコル仕様書 第X版 p.XX
+// https://www.zengin-net.or.jp/...
+```
+
+## Snapshot Tests
+
+For Zengin file output, use buffer equality — NOT snapshot files:
+
+```typescript
+expect(result.buffer).toEqual(expected); // ✅ Deterministic
+expect(result.buffer.toString('hex')).toMatchSnapshot(); // ❌ Encoding-dependent
+```
+
+## Mocking
+
+For HTTP calls, use Vitest's `vi.spyOn` on `undici.fetch`, or inject a mock
+`HttpClient` via the constructor. Never mock `global.fetch` directly.
+
+For token storage, use `InMemoryTokenStorage` in tests.
+
+## Compile-time Error Tests
+
+Use `@ts-expect-error` to assert type-level rejections:
+
+```typescript
+// @ts-expect-error — shorui '21' must not compile
+generateZenginFile({ shorui: '21' });
+```
+
+If the `@ts-expect-error` causes a typecheck error (no error was produced),
+the type guard regressed — fail immediately.
+
+## Test File Location
+
+Co-locate tests with source: `src/foo.ts` → `src/__tests__/foo.test.ts`
+or `src/foo.test.ts`. Either is acceptable; be consistent within a package.

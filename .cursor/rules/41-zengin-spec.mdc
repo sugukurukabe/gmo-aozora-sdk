@@ -1,0 +1,87 @@
+---
+description: 全銀協 Zengin format specification reference
+alwaysApply: false
+---
+
+# 全銀協 Zengin Format Specification
+
+Invoke `@zengin-spec` for authoritative byte layouts, field definitions,
+and encoding rules for Zengin format files.
+
+## Overview
+
+全銀協標準通信プロトコル (Zengin) is the standard format for Japanese bank
+transfer files. Files consist of fixed-length 120-byte records in Shift_JIS.
+
+## File Structure
+
+```
+[Header Record]     1 record  (record type = 1)
+[Data Records]      N records (record type = 2)
+[Trailer Record]    1 record  (record type = 8)
+[End Record]        1 record  (record type = 9)
+```
+
+## Header Record (120 bytes)
+
+| Pos | Len | Field | Notes |
+|---|---|---|---|
+| 1 | 1 | レコード区分 | `'1'` |
+| 2 | 2 | 種別コード | `'11'`=給与, `'12'`=賞与 |
+| 4 | 1 | コード区分 | `'0'`=JIS, `'1'`=EBCDIC |
+| 5 | 10 | 委託者コード | |
+| 15 | 40 | 委託者名 | half-width kana |
+| 55 | 4 | 取組日 | MMDD (月日) |
+| 59 | 4 | 仕向銀行番号 | source bank code |
+| 63 | 15 | 仕向銀行名 | half-width kana |
+| 78 | 3 | 仕向支店番号 | source branch code |
+| 81 | 15 | 仕向支店名 | half-width kana |
+| 96 | 1 | 預金種別 | `'1'`=普通, `'2'`=当座 |
+| 97 | 7 | 口座番号 | right-justified, zero-padded |
+| 104 | 17 | ダミー | spaces |
+
+## Data Record (120 bytes)
+
+| Pos | Len | Field | Notes |
+|---|---|---|---|
+| 1 | 1 | レコード区分 | `'2'` |
+| 2 | 4 | 被仕向銀行番号 | destination bank code |
+| 6 | 15 | 被仕向銀行名 | half-width kana |
+| 21 | 3 | 被仕向支店番号 | destination branch code |
+| 24 | 15 | 被仕向支店名 | half-width kana |
+| 39 | 4 | ダミー | spaces |
+| 43 | 1 | 預金種別 | `'1'`=普通, `'2'`=当座, `'4'`=貯蓄 |
+| 44 | 7 | 口座番号 | right-justified, zero-padded |
+| 51 | 30 | 受取人名 | half-width kana |
+| 81 | 10 | 振込金額 | right-justified, zero-padded |
+| 91 | 1 | 新規コード | `'1'`=初回, `'2'`=変更, `'0'`=その他 |
+| 92 | 20 | EDI情報 | optional, space-padded |
+| 112 | 1 | 振込区分 | `'7'`=電信, `'9'`=文書 |
+| 113 | 8 | ダミー | spaces |
+
+## Trailer Record (120 bytes)
+
+| Pos | Len | Field | Notes |
+|---|---|---|---|
+| 1 | 1 | レコード区分 | `'8'` |
+| 2 | 6 | 合計件数 | right-justified, zero-padded |
+| 8 | 12 | 合計金額 | right-justified, zero-padded |
+| 20 | 101 | ダミー | spaces |
+
+## End Record
+
+Single record, all spaces except position 1 = `'9'`.
+
+## Half-Width Kana Rules
+
+- Use half-width katakana only (半角カナ, JIS X 0201)
+- Voiced consonants: ガ → ｶﾞ (occupies 2 bytes)
+- Semi-voiced: パ → ﾊﾟ (occupies 2 bytes)
+- Full-width characters must be converted before measuring field length
+- If converted text exceeds field byte length, throw an error (never truncate)
+
+## Encoding
+
+- Shift_JIS (CP932) for the entire file
+- Numeric fields: ASCII digits, right-justified, zero-padded
+- Text fields: half-width kana + ASCII, left-justified, space-padded

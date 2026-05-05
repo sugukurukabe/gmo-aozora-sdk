@@ -1,0 +1,27 @@
+[
+  {
+    "sourcePath": "README.md",
+    "snippetPath": "docs/snippets/root-readme.ts",
+    "description": "Root README quick start and common API examples"
+  },
+  {
+    "sourcePath": "README.ja.md",
+    "snippetPath": "docs/snippets/root-readme.ts",
+    "description": "Japanese README quick start mirrors the root SDK flow"
+  },
+  {
+    "sourcePath": "packages/core/README.md",
+    "snippetPath": "docs/snippets/core-readme.ts",
+    "description": "Core package README OAuth and corporation API example"
+  },
+  {
+    "sourcePath": "packages/zengin-format/README.md",
+    "snippetPath": "docs/snippets/zengin-readme.ts",
+    "description": "Zengin package README file generation example"
+  },
+  {
+    "sourcePath": "packages/webhook/README.md",
+    "snippetPath": "docs/snippets/webhook-readme.ts",
+    "description": "Webhook package README Express and framework-agnostic examples"
+  }
+]

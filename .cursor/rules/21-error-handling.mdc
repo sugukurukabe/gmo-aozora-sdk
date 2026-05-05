@@ -1,0 +1,98 @@
+---
+description: Error class hierarchy and error handling patterns
+alwaysApply: false
+globs:
+  - "**/errors/**"
+  - "**/error.ts"
+  - "**/errors.ts"
+---
+
+# Error Handling
+
+## Error Class Hierarchy
+
+```
+GmoAozoraError (base)
+├── GmoAozoraAuthError           — OAuth/token failures
+│   ├── GmoAozoraStateMismatchError  — PKCE state parameter mismatch
+├── GmoAozoraApiError            — API returned an error response
+│   ├── GmoAozoraValidationError     — 400 Bad Request
+│   ├── GmoAozoraPermissionError     — 403 Forbidden
+│   ├── GmoAozoraNotFoundError       — 404 Not Found
+│   ├── GmoAozoraConflictError       — 409 Conflict
+│   └── GmoAozoraRateLimitError      — 429 Too Many Requests
+├── GmoAozoraServerError         — 5xx, retriable
+├── GmoAozoraTimeoutError        — pollResult exceeded timeoutMs
+├── GmoAozoraValidationError     — Zod schema validation failure on response
+└── GmoAozoraWebhookError
+    ├── GmoAozoraWebhookSignatureError  — HMAC mismatch
+    └── GmoAozoraWebhookParseError      — Valid sig, invalid JSON
+```
+
+## Base Error Shape
+
+Every error must include:
+
+```typescript
+class GmoAozoraError extends Error {
+  readonly code: string;
+  readonly requestId?: string;
+  readonly cause?: unknown;
+}
+```
+
+`requestId` comes from the `x-request-id` header on the API response.
+Include it whenever available — it's the key to correlating logs.
+
+## Throwing
+
+Always use a specific error class:
+
+```typescript
+// ✅ Typed, structured
+throw new GmoAozoraAuthError({
+  code: 'REFRESH_FAILED',
+  message: 'Token refresh failed: invalid_grant',
+  requestId,
+});
+
+// ❌ Opaque
+throw new Error('refresh failed');
+```
+
+## Catching
+
+Re-narrow the error type in catch blocks:
+
+```typescript
+try {
+  await client.corporation.balances.get();
+} catch (e) {
+  if (e instanceof GmoAozoraRateLimitError) {
+    await sleep(e.retryAfterMs ?? 1000);
+    // retry
+  } else if (e instanceof GmoAozoraError) {
+    logger.error('api_error', { code: e.code, requestId: e.requestId });
+    throw e;
+  }
+  throw e; // re-throw unknown errors — never swallow them
+}
+```
+
+Never `catch { /* nothing */ }`. Every error is either handled or re-thrown.
+
+## Serialization
+
+Errors must be JSON-serializable for logging:
+
+```typescript
+// ✅ Structured log entry
+logger.error('transfer_failed', {
+  code: e.code,
+  message: e.message,
+  requestId: e.requestId,
+});
+
+// ❌ Raw error object — may not serialize cleanly
+logger.error('transfer_failed', { error: e });
+```

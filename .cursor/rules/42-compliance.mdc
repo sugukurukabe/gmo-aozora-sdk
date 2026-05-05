@@ -1,0 +1,71 @@
+---
+description: SSW (Specified Skilled Worker) compliance rules for payroll operations
+alwaysApply: false
+---
+
+# SSW Compliance — Payroll & Residence Rules
+
+Invoke `@compliance` for anything related to residence status checking,
+visa compliance, or payroll decision logic.
+
+## Background
+
+Sugukuru dispatches Indonesian workers under Japan's 特定技能 (Tokutei Gino /
+Specified Skilled Worker) visa program. Each worker's visa status determines
+whether a payroll transfer can proceed.
+
+## Residence Status Model
+
+```typescript
+type ResidenceStatus =
+  | { kind: 'valid'; expiresAt: string }           // 在留資格有効
+  | { kind: 'tokurei_kikan'; until: string }        // 特例期間（適法）
+  | { kind: 'expired_no_app' }                      // 期限切れ・更新申請なし
+  | { kind: 'overdue' };                            // 滞在超過
+```
+
+NEVER collapse this to a string or boolean. The 4-state model is legally
+necessary — `tokurei_kikan` is a legitimate state where work is permitted.
+
+## 3-Track Payroll Decision
+
+Given a worker's `ResidenceStatus`, the response must follow one of three tracks:
+
+| Status | Action | Explanation |
+|---|---|---|
+| `valid` | Execute transfer | Valid visa, normal operation |
+| `tokurei_kikan` | Execute transfer | 特例期間 = legally authorized to work |
+| `expired_no_app` | Stop work, hold wages | Cannot work, wages held pending |
+| `overdue` | Refer to immigration authority | Overstay — legal obligation |
+
+```typescript
+function getPayrollTrack(status: ResidenceStatus): PayrollTrack {
+  switch (status.kind) {
+    case 'valid':
+    case 'tokurei_kikan':
+      return 'execute';
+    case 'expired_no_app':
+      return 'stop_work';
+    case 'overdue':
+      return 'refer_immigration';
+    default:
+      return assertNever(status);
+  }
+}
+```
+
+The switch must be exhaustive. If `assertNever` is reached, a new status
+was added to the type without updating the compliance logic — fail loudly.
+
+## Important Legal Notes
+
+- 特例期間 is defined under 入管法 (Immigration Control Act) Article 20-6
+- During 特例期間, work continuation is explicitly permitted by law
+- Wage withholding without basis may violate 労働基準法 Article 24
+
+## Invoke when
+
+- Adding any feature that checks worker eligibility before transfer
+- Modifying the `ResidenceStatus` type
+- Adding new payroll tracks or decision branches
+- Writing compliance-related test fixtures

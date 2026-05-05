@@ -1,0 +1,50 @@
+---
+description: Mission and purpose of @sugukuru/gmo-aozora-sdk
+alwaysApply: true
+---
+
+# Mission
+
+This SDK exists to solve a real problem: Sugukuru Co., Ltd. processes 150+
+Indonesian Specified Skilled Worker payroll transfers every month through
+GMO Aozora Net Bank. Before this SDK, that was 14 hours of manual transcription.
+After, it is 8 minutes of automated batch processing.
+
+We are not just writing an SDK. We are demonstrating that a small regional
+staffing company in Kagoshima can build production-grade banking software.
+
+## What this SDK is
+
+- **The first** production-grade TypeScript SDK for GMO Aozora Net Bank
+- **Production-bound**: targeted at 150+ payroll transfers/month from the
+  June 2026 cycle; current status is feature-complete and Sunabar-validated
+- **OSS** targeting the sunabar developer community
+- **A foundation** for future work: sugukuru-finance MCP, SSW Compass
+
+## What this SDK is NOT
+
+- A quick hack to read a bank balance
+- A learning project for TypeScript beginners
+- A translation of the official `gmo-aozora-api-nodejs` (JS, Node 10+, no Zod)
+- A monolith — it is 3 independent, composable packages
+
+## Core constraints
+
+- TypeScript 5.x strict mode only — `any` is a bug, not a shortcut
+- Zod v4 everywhere — no raw `JSON.parse` without immediate schema validation
+- Node.js 20+ only — we use built-in `fetch`, `node:crypto`, `node:stream`
+- No synchronous I/O in request paths — banking is time-sensitive
+- No plaintext token storage — always use the `TokenStorage` interface
+
+## Differentiation Reminder
+
+We are the only production-grade TypeScript option in the GMO Aozora ecosystem.
+Our value comes from three axes that must NEVER be weakened:
+
+1. **Type safety** — Zod everywhere, `ZenginShorui = '11' | '12'` (never string)
+2. **Production defaults** — retry, KMS token storage, polling, rate limiting
+3. **Domain helpers** — Zengin file generation, residence-aware payroll compliance
+
+If you suggest code that weakens any of these axes, you are eroding our reason
+to exist. Consult rule `03-differentiation-guard` before proposing changes
+that touch types, defaults, or domain helpers.

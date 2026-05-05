@@ -1,0 +1,72 @@
+{
+  "name": "@sugukuru/gmo-aozora-webhook",
+  "version": "0.4.0",
+  "description": "Webhook HMAC-SHA256 verification for GMO Aozora Net Bank — framework-agnostic with Express middleware",
+  "author": "Sugukuru Co., Ltd.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sugukurukabe/gmo-aozora-sdk.git",
+    "directory": "packages/webhook"
+  },
+  "homepage": "https://github.com/sugukurukabe/gmo-aozora-sdk/tree/main/packages/webhook#readme",
+  "bugs": {
+    "url": "https://github.com/sugukurukabe/gmo-aozora-sdk/issues"
+  },
+  "keywords": [
+    "gmo-aozora",
+    "webhook",
+    "hmac",
+    "sha256",
+    "express",
+    "japanese-bank",
+    "typescript",
+    "fintech"
+  ],
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "pnpm exec eslint \"src/**/*.ts\" --max-warnings 0",
+    "pack:dry-run": "npm pack --dry-run"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.0.0",
+    "express": "^5.2.1",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "express": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    }
+  }
+}

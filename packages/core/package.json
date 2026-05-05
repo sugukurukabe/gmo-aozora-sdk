@@ -1,0 +1,63 @@
+{
+  "name": "@sugukuru/gmo-aozora-sdk",
+  "version": "0.4.0",
+  "description": "Production-grade TypeScript SDK for GMO Aozora Net Bank's Open API — OAuth PKCE, typed corporation APIs, retry, rate limiting",
+  "author": "Sugukuru Co., Ltd.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sugukurukabe/gmo-aozora-sdk.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/sugukurukabe/gmo-aozora-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/sugukurukabe/gmo-aozora-sdk/issues"
+  },
+  "keywords": [
+    "gmo-aozora",
+    "bank",
+    "japanese-bank",
+    "open-api",
+    "oauth",
+    "transfer",
+    "zengin",
+    "typescript",
+    "fintech"
+  ],
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "pnpm exec eslint \"src/**/*.ts\" --max-warnings 0",
+    "pack:dry-run": "npm pack --dry-run"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

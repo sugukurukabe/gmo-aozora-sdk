@@ -1,0 +1,86 @@
+---
+description: Zengin format rules for @sugukuru/zengin-format — multi-bank ready
+alwaysApply: false
+globs:
+  - "packages/zengin-format/**"
+---
+
+# Zengin Format
+
+## Record Structure (120 bytes, Shift_JIS)
+
+Each data record is exactly 120 bytes. Fields are fixed-length, space-padded
+or zero-padded depending on type:
+
+| Field | Position | Length | Type | Notes |
+|---|---|---|---|---|
+| 種別コード (shorui) | 1 | 2 | numeric | `'11'`=給与, `'12'`=賞与 |
+| 銀行コード | 3 | 4 | numeric | 4-digit bank code |
+| 銀行名 | 7 | 15 | half-width kana | |
+| 支店コード | 22 | 3 | numeric | |
+| 支店名 | 25 | 15 | half-width kana | |
+| 預金種別 | 40 | 1 | numeric | 1=普通, 2=当座, 4=貯蓄 |
+| 口座番号 | 41 | 7 | numeric | right-justified, zero-padded |
+| 受取人名 | 48 | 30 | half-width kana | |
+| 振込金額 | 78 | 10 | numeric | right-justified, zero-padded |
+| 新規コード | 88 | 1 | numeric | 1=初回, 2=変更, 0=その他 |
+| EDI情報 | 89 | 20 | alphanumeric | optional, space-padded |
+| 振込区分 | 109 | 1 | numeric | 7=電信, 9=文書 |
+| ダミー | 110 | 11 | space-padded | all spaces |
+
+## Shorui (種別コード) — LOAD-BEARING Type
+
+```typescript
+type ZenginShorui = '11' | '12';
+```
+
+- `'11'` = 給与振込 (payroll)
+- `'12'` = 賞与振込 (bonus)
+- NEVER widen to `string`
+- NEVER accept `'21'` or any other code
+
+## Half-Width Kana Conversion
+
+All text fields require half-width katakana (半角カナ). Use the built-in
+`toHalfWidthKana(text: string): string` converter which handles:
+- Full-width → half-width conversion
+- Voiced consonants (dakuten): ガ → ｶﾞ (2 chars)
+- Semi-voiced (handakuten): パ → ﾊﾟ (2 chars)
+- Length validation after conversion (field overflow = error, not truncation)
+
+## Multi-bank Readiness
+
+This package must NEVER contain GMO-specific defaults. See `packages/zengin-format/AGENTS.md`.
+
+Bank info is always caller-provided:
+```typescript
+// ✅ Correct
+generateZenginFile({ sourceBank: { code: '0310', nameKana: 'ｼﾞｰｴﾑｵｰｱｵｿﾞﾗ' }, ... });
+
+// ❌ Wrong — hardcoded bank code
+```
+
+Before adding any new exported function, verify it works generically for
+SMBC, MUFG, and regional banks (invoke `@multi-bank` if unsure).
+
+## Control Records
+
+- Header record (1 per file): total record count, file date, shorui code
+- Trailer record (1 per file): total amount, data record count
+- Counts in header/trailer must exactly match the data record array length
+
+## Test Fixtures
+
+Golden tests compare byte-exact output:
+
+```typescript
+expect(result.buffer).toEqual(expected); // ✅ Buffer equality
+// ❌ never: toMatchSnapshot() — encoding-dependent
+```
+
+Fixture files in `fixtures/{bank}-sample-{purpose}.dat`. Each fixture file
+must cite the source PDF URL in a header comment.
+
+## Reference
+
+Invoke `@zengin-spec` for authoritative byte layouts and edge cases.

@@ -1,0 +1,74 @@
+name: Bug Report
+description: Report a bug in @sugukuru/gmo-aozora-sdk
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Please fill in as much
+        detail as possible to help us reproduce and fix the issue.
+
+  - type: input
+    id: version
+    attributes:
+      label: SDK Version
+      description: Output of `npm list @sugukuru/gmo-aozora-sdk`
+      placeholder: "@sugukuru/gmo-aozora-sdk@0.x.x"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: GMO Aozora Environment
+      options:
+        - sunabar (sandbox)
+        - staging
+        - production
+    validations:
+      required: true
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Affected Package
+      options:
+        - "@sugukuru/gmo-aozora-sdk (core)"
+        - "@sugukuru/zengin-format"
+        - "@sugukuru/gmo-aozora-webhook"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: What happened? What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal Reproduction
+      description: |
+        A minimal TypeScript snippet that reproduces the issue.
+        Remove any credentials before submitting.
+      render: typescript
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Error Output
+      description: Full error message and stack trace, if any.
+      render: text
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js Version
+      placeholder: "v20.x.x"
+    validations:
+      required: true

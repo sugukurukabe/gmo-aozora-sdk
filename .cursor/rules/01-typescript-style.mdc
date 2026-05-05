@@ -1,0 +1,111 @@
+---
+description: TypeScript coding style for @sugukuru/gmo-aozora-sdk
+alwaysApply: true
+---
+
+# TypeScript Style
+
+## Strictness
+
+Always target:
+- `strict: true`
+- `exactOptionalPropertyTypes: true`
+- `noUncheckedIndexedAccess: true`
+
+Never use `as any` or `// @ts-ignore`. Use `// @ts-expect-error` only at test
+boundaries, with a comment explaining the suppression.
+
+## Types
+
+Prefer `type` over `interface` for public API surfaces to avoid unintended
+declaration merging.
+
+Use discriminated unions for state machines:
+
+```typescript
+// ✅ Discriminated union — exhaustive switch is enforced
+type TokenState =
+  | { kind: 'fresh'; accessToken: string; expiresAt: number }
+  | { kind: 'expired'; refreshToken: string }
+  | { kind: 'revoked' };
+
+// ❌ Boolean flags — easy to create impossible combinations
+type TokenState = { accessToken?: string; expired?: boolean; revoked?: boolean };
+```
+
+Literal union types for domain codes — NEVER widen to string:
+
+```typescript
+// ✅ Compile-time validated
+type ZenginShorui = '11' | '12';
+type GmoEnvironment = 'sunabar' | 'staging' | 'production';
+
+// ❌ Any string accepted — typos become runtime bugs
+type ZenginShorui = string;
+```
+
+Zod schema naming:
+- Schema: `FooSchema` (suffix -Schema)
+- Inferred type: `type Foo = z.infer<typeof FooSchema>`
+
+## Async / Promises
+
+- Async/await only — never `.then().catch()` chains
+- Use `Promise.allSettled` when partial failures are acceptable
+- Use `for await...of` for async iterators (pagination, streaming)
+
+## Imports
+
+- Imports at the top of the file only (no inline imports)
+- Group order: Node built-ins → external packages → internal (`@sugukuru/*`) → relative
+
+## Naming
+
+- `camelCase` for functions and variables
+- `PascalCase` for types, classes, Zod schemas
+- `SCREAMING_SNAKE_CASE` for constants and enum-like objects
+
+## Error Handling
+
+Every thrown value must be a typed error class extending `GmoAozoraError`:
+
+```typescript
+// ✅ Typed, structured
+throw new GmoAozoraApiError({ code: 'INVALID_ACCOUNT', message: '...', requestId });
+
+// ❌ Opaque runtime error
+throw new Error('something went wrong');
+```
+
+Catch blocks must re-narrow the type:
+
+```typescript
+catch (e) {
+  if (e instanceof GmoAozoraError) { ... }
+  throw e; // re-throw unknown errors
+}
+```
+
+Never `catch { /* ignore */ }` — every error is either handled or re-thrown.
+
+## Switch Statements
+
+For discriminated unions and enums, switches must be exhaustive:
+
+```typescript
+function assertNever(x: never): never {
+  throw new Error(`Unhandled case: ${JSON.stringify(x)}`);
+}
+
+switch (state.kind) {
+  case 'fresh': return state.accessToken;
+  case 'expired': return refresh(state.refreshToken);
+  case 'revoked': throw new GmoAozoraAuthError({ code: 'TOKEN_REVOKED' });
+  default: return assertNever(state);
+}
+```
+
+## Comments
+
+Only comment non-obvious intent, trade-offs, or constraints that the code
+itself cannot express. Never narrate what the code does.

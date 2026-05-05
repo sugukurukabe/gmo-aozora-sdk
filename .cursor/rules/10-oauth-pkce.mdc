@@ -1,0 +1,75 @@
+---
+description: OAuth 2.0 + PKCE implementation rules for GMO Aozora auth layer
+alwaysApply: false
+globs:
+  - "packages/core/src/auth/**"
+---
+
+# OAuth 2.0 + PKCE
+
+## Endpoints (GMO Aozora)
+
+| Environment | Base URL |
+|---|---|
+| sunabar | `https://sandbox.apigateway.prod.gmo-aozora.com/ganb/api/auth/v1/` |
+| staging | `https://stg-api.gmo-aozora.com/ganb/api/auth/v1/` |
+| production | `https://api.gmo-aozora.com/ganb/api/auth/v1/` |
+
+- Authorization: `GET /authorization`
+- Token exchange & refresh: `POST /token`
+- Revoke: `POST /tokens/revoke`
+
+## PKCE S256 Flow
+
+1. Generate `codeVerifier` — 32 random bytes encoded as base64url (no `=` padding)
+2. Compute `codeChallenge` — `base64url(sha256(codeVerifier))`
+3. Build authorization URL with:
+   - `response_type=code`
+   - `code_challenge_method=S256`
+   - `code_challenge=<codeChallenge>`
+   - `state=<base64url(randomBytes(32))>`
+4. After redirect, verify `state` matches saved value (throws `GmoAozoraStateMismatchError`)
+5. Exchange code: POST with `grant_type=authorization_code` + `code_verifier`
+6. Persist tokens via `TokenStorage.save(userId, tokens)`
+
+## Scopes
+
+| Scope | Access |
+|---|---|
+| `private:account` | Account info, balance, transactions |
+| `private:transfer` | Transfer operations |
+| `private:offline_access` | Refresh token (always request this) |
+| `corp:account` | Electric delegated: account (corp use) |
+| `corp:transfer` | Electric delegated: transfer (corp use) |
+
+Always request `private:offline_access` to obtain a refresh token.
+Request only the minimum scopes needed for the operation.
+
+## Token Lifecycle
+
+- Check expiry before every API request
+- If `tokens.expiresAt - Date.now() < 60_000`, proactively refresh
+- After a successful refresh, immediately persist the new tokens
+- If refresh returns 401, the session is dead — throw `GmoAozoraAuthError`
+  with `code: 'REFRESH_FAILED'` and clear stored tokens
+- On explicit logout, call revoke endpoint and clear stored tokens
+
+## TokenStorage Interface
+
+```typescript
+interface TokenStorage {
+  save(userId: string, tokens: TokenSet): Promise<void>;
+  load(userId: string): Promise<TokenSet | null>;
+  delete(userId: string): Promise<void>;
+}
+```
+
+Implementations:
+- `InMemoryTokenStorage` — development and testing only
+- `CloudKmsTokenStorage` — production (v0.6)
+
+## Errors
+
+- `GmoAozoraStateMismatchError` — state parameter does not match saved value
+- `GmoAozoraAuthError` — token exchange, refresh, or revoke failed
+- Always include the OAuth error code from the response body in the error

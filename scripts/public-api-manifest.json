@@ -1,0 +1,55 @@
+[
+  {
+    "name": "@sugukuru/gmo-aozora-sdk",
+    "distDir": "packages/core/dist",
+    "exports": [
+      "GmoAozoraClient",
+      "GmoAozoraUserClient",
+      "InMemoryTokenStorage",
+      "OAuthClient",
+      "PRIVATE_SCOPES",
+      "parseAmount",
+      "formatAmount",
+      "redactLogMeta",
+      "TransferCreateInputSchema",
+      "BulkTransferCreateInputSchema",
+      "TransferRequestStatusCodeSchema",
+      "BulkTransferRequestStatusCodeSchema",
+      "GmoAozoraError",
+      "GmoAozoraApiError",
+      "GmoAozoraTimeoutError",
+      "GmoAozoraValidationError"
+    ]
+  },
+  {
+    "name": "@sugukuru/zengin-format",
+    "distDir": "packages/zengin-format/dist",
+    "exports": [
+      "buildZenginFile",
+      "toHalfWidthKana",
+      "encodeShiftJis",
+      "ZenginFileInputSchema",
+      "ZenginRecordSchema",
+      "ZenginRemitterSchema",
+      "ZenginShoruiSchema",
+      "ZenginEncodingError"
+    ]
+  },
+  {
+    "name": "@sugukuru/gmo-aozora-webhook",
+    "distDir": "packages/webhook/dist",
+    "exports": [
+      "verifyWebhookSignature",
+      "verifyAndParseWebhookEvent",
+      "parseWebhookEvent",
+      "webhookMiddleware",
+      "WebhookEventSchema",
+      "WebhookEventNameSchema",
+      "VaDepositTransactionSchema",
+      "UnknownWebhookEventSchema",
+      "WebhookError",
+      "WebhookSignatureError",
+      "WebhookPayloadError"
+    ]
+  }
+]

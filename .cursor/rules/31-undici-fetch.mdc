@@ -1,0 +1,72 @@
+---
+description: undici fetch usage and HTTP client implementation patterns
+alwaysApply: false
+---
+
+# undici / fetch
+
+## Why undici
+
+Node.js 20 ships `fetch` built-in (via undici). We use `fetch` directly
+without any third-party HTTP libraries. This keeps the dependency footprint
+minimal and ensures Node 20+ compatibility.
+
+## Basic Usage
+
+```typescript
+import { fetch } from 'undici'; // or use global fetch in Node 20+
+
+const response = await fetch(url, {
+  method: 'POST',
+  headers: {
+    'x-access-token': accessToken,
+    'Accept': 'application/json;charset=UTF-8',
+    'Content-Type': 'application/json;charset=UTF-8',
+    'x-request-id': generateUuidv7(),
+  },
+  body: JSON.stringify(payload),
+});
+```
+
+## Response Handling
+
+Always check `response.ok` before parsing:
+
+```typescript
+if (!response.ok) {
+  const body = await response.json().catch(() => null);
+  throw mapHttpErrorToTyped(response.status, body, requestId);
+}
+const data = ResponseSchema.parse(await response.json());
+```
+
+Never call `.json()` without handling the case where the body is not valid JSON.
+
+## Timeouts
+
+Set a request timeout using `AbortController`:
+
+```typescript
+const controller = new AbortController();
+const timeout = setTimeout(() => controller.abort(), 30_000);
+try {
+  const response = await fetch(url, { signal: controller.signal, ...opts });
+  // ...
+} finally {
+  clearTimeout(timeout);
+}
+```
+
+Default timeout: 30 seconds. Configurable per `GmoAozoraClient` options.
+
+## Do NOT Use
+
+- `axios` — unnecessary dependency
+- `node-fetch` — use built-in fetch
+- `got`, `ky`, `superagent` — same reason
+- `http.request` / `https.request` — low-level, use fetch
+
+## Connection Pooling
+
+undici's `Pool` is used internally for connection reuse. Do not create a new
+`fetch` client per request — reuse the `HttpClient` instance.

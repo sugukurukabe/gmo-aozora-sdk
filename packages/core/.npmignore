@@ -1,0 +1,7 @@
+src/
+__tests__/
+tsconfig*.json
+vitest.config.ts
+tsup.config.ts
+coverage/
+.nyc_output/

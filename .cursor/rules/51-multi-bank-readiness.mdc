@@ -1,0 +1,82 @@
+---
+description: Patterns that prepare for v1.2's multi-bank abstraction layer
+alwaysApply: false
+---
+
+# Multi-Bank Readiness
+
+## Why this matters now
+
+v1.0 supports only GMO Aozora. v1.2 (Q4 2026) will introduce an abstraction
+layer for other Japanese banks (SMBC, MUFG, regional banks) that use the
+same Zengin standard.
+
+If we lock GMO-specific assumptions into the wrong places now, v1.2 becomes
+a major rewrite. The goal: v1.2 is a **library extension**, not a **rewrite**.
+
+## Where GMO-specific code is OK
+
+- `packages/core/src/**` — entirely GMO-specific, no abstraction needed yet
+- `examples/` — fine to be GMO-only
+- Documentation — fine to be GMO-centric
+
+## Where GMO-specific code is NOT OK
+
+- `packages/zengin-format/**` — must work for any Japanese bank
+- `packages/webhook/**` — generic HMAC-SHA256 verification, parameterized headers
+
+## Patterns that prepare for v1.2
+
+### Bank info as injected data
+
+```typescript
+// ❌ Bad: hardcoded GMO Aozora
+const sourceBank = { code: '0310', nameKana: 'ｼﾞｰｴﾑｵｰｱｵｿﾞﾗ' };
+
+// ✅ Good: caller provides
+function generateZenginFile({ sourceBank, ... }: { sourceBank: BankInfo, ... }) {
+  // Uses sourceBank.code and sourceBank.nameKana directly
+}
+```
+
+### Webhook header configurability
+
+```typescript
+// ❌ Bad: GMO-only
+const signature = req.header('x-webhook-signature');
+
+// ✅ Good: configurable
+const verifier = createWebhookVerifier({
+  signatureHeader: 'x-webhook-signature', // GMO default
+  algorithm: 'sha256',
+});
+```
+
+### Method naming (v1.2 interface preview)
+
+In v1.2 we may introduce:
+
+```typescript
+interface JapaneseBankClient {
+  getBalance(accountId: string): Promise<Balance>;
+  createBulkTransfer(input: BulkTransferInput): Promise<BulkTransferResult>;
+}
+class GmoAozoraClient implements JapaneseBankClient { ... }
+```
+
+So in v1.0:
+- Keep method names generic (`getBalance`, not `gmoAozoraBalance`)
+- If you find types that are naturally generic, note them for a future
+  `@sugukuru/japanese-banking-types` package
+
+## What NOT to do prematurely
+
+- Don't create the abstraction layer in v1.0 — premature abstraction
+- Don't add `BankProvider` interfaces without a concrete second implementation
+- Don't accept PRs that add SMBC/Mizuho support before v1.0 is shipped
+
+## Invoke when
+
+- You're tempted to add `gmoAozora`-prefixed types in shared packages
+- You're designing a new feature in `zengin-format` or `webhook`
+- You're considering whether to publish a type in a separate package

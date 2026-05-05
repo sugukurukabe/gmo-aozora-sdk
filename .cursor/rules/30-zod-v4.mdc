@@ -1,0 +1,80 @@
+---
+description: Zod v4 schema patterns for @sugukuru/gmo-aozora-sdk
+alwaysApply: false
+---
+
+# Zod v4
+
+## Version
+
+This project uses **Zod v4** (`zod@^4.0.0`). The API differs from v3 in
+several important ways — do not use v3 patterns.
+
+## Key v4 Differences
+
+```typescript
+// v4: z.string().min(1) — same API, but internals differ
+// v4: z.discriminatedUnion('kind', [...]) — stable in v4
+// v4: z.object().strict() — throws on unknown keys
+// v4: error.format() replaced by z.treeifyError() or z.prettifyError()
+```
+
+## Schema Naming
+
+```typescript
+// Zod schema
+const GetBalancesResponseSchema = z.object({ ... });
+
+// Inferred type
+type GetBalancesResponse = z.infer<typeof GetBalancesResponseSchema>;
+```
+
+Export both the schema and the inferred type. Consumers may need the schema
+for their own validation pipelines.
+
+## Strict vs Passthrough
+
+- Use `.strict()` on response schemas — reject unexpected fields from GMO API
+  (early warning of spec changes)
+- Use `.passthrough()` only when intentionally forwarding unknown fields
+
+## Amount Fields
+
+GMO amounts are strings. Validate and convert:
+
+```typescript
+const AmountStringSchema = z.string().regex(/^\d+$/).transform(BigInt);
+```
+
+Never accept `z.number()` for monetary amounts.
+
+## Discriminated Unions
+
+Prefer `z.discriminatedUnion` for multi-state types — more efficient and gives
+clearer error messages than `z.union`:
+
+```typescript
+const ResidenceStatusSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('valid'), expiresAt: z.string() }),
+  z.object({ kind: z.literal('tokurei_kikan'), until: z.string() }),
+  z.object({ kind: z.literal('expired_no_app') }),
+  z.object({ kind: z.literal('overdue') }),
+]);
+```
+
+## Validation Errors
+
+When a Zod parse fails on an API response, throw `GmoAozoraValidationError`
+with the flattened Zod issues:
+
+```typescript
+const result = ResponseSchema.safeParse(body);
+if (!result.success) {
+  throw new GmoAozoraValidationError({
+    code: 'RESPONSE_PARSE_FAILED',
+    message: z.prettifyError(result.error),
+    requestId,
+  });
+}
+return result.data;
+```

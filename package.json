@@ -1,0 +1,43 @@
+{
+  "name": "@sugukuru/gmo-aozora-sdk-root",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "format:check": "prettier --check \"packages/**/*.ts\" \"examples/**/*.ts\" \"docs/snippets/**/*.ts\" \"docs/snippets/**/*.json\" \"scripts/**/*.mjs\" \"scripts/**/*.json\"",
+    "format:write": "prettier --write \"packages/**/*.ts\" \"examples/**/*.ts\" \"docs/snippets/**/*.ts\" \"docs/snippets/**/*.json\" \"scripts/**/*.mjs\" \"scripts/**/*.json\"",
+    "security:scan": "node scripts/security-scan.mjs",
+    "metadata:check": "node scripts/check-package-metadata.mjs",
+    "api:check": "node scripts/check-public-api.mjs",
+    "docs:snippets": "node scripts/check-doc-snippets.mjs",
+    "docs:typecheck": "tsc --project docs/snippets/tsconfig.json --noEmit",
+    "examples:typecheck": "tsc --project examples/tsconfig.json --noEmit",
+    "dist:smoke": "node scripts/dist-smoke-test.mjs",
+    "consumer:smoke": "node scripts/consumer-smoke.mjs",
+    "audit:security": "pnpm audit --audit-level high",
+    "pack:dry-run": "node scripts/pack-dry-run.mjs",
+    "verify": "pnpm typecheck && pnpm test && pnpm lint && pnpm build && pnpm dist:smoke && pnpm api:check && pnpm format:check && pnpm docs:snippets && pnpm docs:typecheck && pnpm examples:typecheck && pnpm security:scan && pnpm audit:security && pnpm metadata:check && pnpm pack:dry-run",
+    "ci": "pnpm run verify",
+    "changeset": "changeset"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.2",
+    "@typescript-eslint/parser": "^8.59.2",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "express": "^5.2.1",
+    "prettier": "^3.8.3",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

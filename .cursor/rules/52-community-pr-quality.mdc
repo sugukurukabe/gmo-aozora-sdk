@@ -1,0 +1,80 @@
+---
+description: PR review quality bar for sunabar community contributions
+alwaysApply: false
+---
+
+# Community PR Quality Bar
+
+This SDK is OSS targeting the sunabar community (developers using GMO Aozora's
+sandbox). PRs from external contributors must meet the same bar as internal
+changes, but with extra empathy.
+
+## Acceptance criteria for any PR
+
+A PR is "ready to merge" when:
+
+- [ ] CI is green (typecheck, test, build, lint)
+- [ ] CHANGELOG entry added via `pnpm changeset`
+- [ ] Tests cover new behavior (happy path + at least one failure mode)
+- [ ] No regression of differentiation guards (rule `03`)
+- [ ] Documentation updated if public API changed
+- [ ] No new dependencies without justification
+- [ ] Commit messages follow Conventional Commits
+
+## Review tone
+
+When reviewing community PRs:
+
+- Start with what's good ("Thanks for adding the X feature, this is great")
+- Be specific about required changes ("Could you add a test for the case where Y is empty?")
+- Cite the relevant rule when rejecting ("Per rule 03, we cannot widen `ZenginShorui`")
+- Suggest alternatives, don't just say "no" ("Instead, could you use the discriminated union pattern?")
+- End with appreciation ("Looking forward to seeing this in v0.6!")
+
+## Edge cases that need extra scrutiny
+
+### Edge case 1: PRs that "simplify" types
+
+Pattern:
+> "I noticed `ZenginShorui` is `'11' | '12'`. I changed it to `string` for flexibility."
+
+Response: **REJECT** with reference to rules `03` and `13`. This is a regression.
+
+### Edge case 2: PRs that add SMBC/Mizuho support directly
+
+Pattern:
+> "I added MizuhoClient that uses your patterns!"
+
+Response: **CLOSE without merging**, but thank the contributor. Explain that
+multi-bank support is v1.2 territory and v1.0 must stabilize first.
+Encourage them to publish a separate `@contributor/mizuho-bank-sdk` for now.
+
+### Edge case 3: PRs that add features Sugukuru doesn't use
+
+Pattern:
+> "I added Visa debit support for our use case."
+
+Response: **CONSIDER carefully**. Accept if:
+- The feature is in our roadmap
+- Test coverage matches our standard
+- The contributor commits to maintenance
+
+Otherwise, suggest a separate `@contributor/visa-debit-extension` package.
+
+### Edge case 4: PRs from people who clearly haven't read the docs
+
+Pattern:
+> "Why does this throw `GmoAozoraStateMismatchError`?"
+
+Response: Patiently link to `docs/architecture.md` and the relevant rule.
+Treat every "obvious" question as a documentation improvement opportunity.
+
+## Cursor: when reviewing a PR
+
+If the user asks you to review a PR:
+
+1. Read the diff entirely
+2. Run the mental typecheck and test checks from rule `04`
+3. Check against rules `03`, `13`, `14`
+4. Suggest improvements in the tone above
+5. Identify if any rule should be added (recurring confusion = new rule)

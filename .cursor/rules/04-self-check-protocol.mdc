@@ -1,0 +1,77 @@
+---
+description: Self-check protocol Cursor must run before claiming a task is done
+alwaysApply: true
+---
+
+# Self-Check Protocol
+
+After writing any code, before saying "done", run this protocol mentally.
+If any check fails, fix the code — do not negotiate the criteria.
+
+## Step 1: Type integrity
+
+Run `pnpm typecheck` mentally on the changed files:
+- Are all imports resolved?
+- Do all return types match what the schema declares?
+- Is `exactOptionalPropertyTypes` happy with the optional properties?
+- Does the change introduce any `any`?
+
+## Step 2: Test coverage
+
+For every new function or class:
+- Is there at least one happy-path test?
+- Is there at least one failure-mode test?
+- Are edge cases (empty input, max input, null vs undefined) tested?
+
+For modified functions: did the old tests still logically cover the new
+behavior, or do they need updating?
+
+## Step 3: Differentiation guard (rule 03)
+
+- Does this change introduce any forbidden pattern from rule `03`?
+- Does this change reduce type safety, even slightly?
+- Does this change make the API less ergonomic than what `@sugukuru/zengin-format`
+  consumers expect?
+
+## Step 4: Spec compliance
+
+For changes touching API client code:
+- Did you check `docs/skills/gmo-aozora-api.md` for the endpoint spec?
+- Are headers correct? (`x-access-token`, not Bearer)
+- Is the path prefix correct? (`/ganb/api/corporation/v1/`)
+
+For changes touching Zengin format:
+- Did you verify each record is exactly 120 bytes in Shift_JIS?
+- Did you run the half-width kana converter on text fields?
+- Did you check shorui is `'11' | '12'`?
+
+For changes touching webhook code:
+- Did you use `timingSafeEqual`?
+- Did you read the raw body as `Buffer` (not parsed JSON)?
+
+## Step 5: Documentation parity
+
+- If the public API surface changed, did you update the JSDoc?
+- If you added a new feature, did you suggest a CHANGELOG entry?
+- If a behavior diverges from "obvious", did you add a comment explaining why?
+
+## Step 6: Commit message
+
+Suggest a commit message in the form:
+
+```
+<type>(<scope>): <subject>
+
+<body explaining motivation, not just what changed>
+
+<refs to issues, ADRs, spec sections if relevant>
+```
+
+Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `ci`.
+
+## When uncertain
+
+If any check above is unclear, do NOT silently proceed. Either:
+1. Ask the user explicitly
+2. Or invoke the relevant manual rule (`@gmo-spec`, `@zengin-spec`, `@compliance`)
+3. Or read the relevant skill in `docs/skills/`

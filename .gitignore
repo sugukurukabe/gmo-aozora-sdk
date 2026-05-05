@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# Pack artifacts (npm pack output, consumer smoke tarballs)
+*.tgz
+
+# Test outputs
+coverage/
+.vitest-cache/
+
+# Environment — NEVER commit secrets
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor
+.turbo/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Third-party reference material — do not redistribute
+# GMO Aozora official spec PDFs and any other vendor docs are copyrighted
+# and must be obtained from the vendor directly, not through this repository.
+*.pdf

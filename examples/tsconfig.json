@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "paths": {
+      "@sugukuru/gmo-aozora-sdk": ["../packages/core/src/index.ts"],
+      "@sugukuru/zengin-format": ["../packages/zengin-format/src/index.ts"],
+      "@sugukuru/gmo-aozora-webhook": ["../packages/webhook/src/index.ts"]
+    }
+  },
+  "include": ["./**/*.ts"]
+}

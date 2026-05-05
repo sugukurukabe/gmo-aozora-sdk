@@ -1,0 +1,89 @@
+---
+description: Differentiation guards based on competitive analysis (vs official Node SDK and other Japanese banks)
+alwaysApply: true
+---
+
+# Differentiation Guards
+
+This SDK is the world's first **production-grade TypeScript SDK** for GMO Aozora.
+Every other option in the market (as of 2026-05) lacks at least one of:
+- TypeScript-first design with full Zod validation
+- Domain-specific helpers (Zengin, residence-aware payroll)
+- Production defaults (retry, rate limiting, KMS storage)
+
+**Your mistakes can erode all three advantages in a single PR.**
+This rule lists the patterns Cursor must NEVER write.
+
+## Forbidden Pattern 1: "Official-SDK style" (loses TS advantage)
+
+The official `gmo-aozora-api-nodejs` is JS, Node 10+, no Zod, no retry.
+We MUST be its opposite. Therefore:
+
+- NEVER use `: any` as a parameter or return type
+- NEVER use `JSON.parse(...)` without immediately validating with a Zod schema
+- NEVER write `try { ... } catch { /* ignore */ }` — every error is typed
+- NEVER use `console.log` — use the Logger abstraction
+- NEVER fall back to plain Promises with `.then().catch()` — async/await only
+
+If you find yourself writing code that "would work in Node 10", stop. Re-read
+this rule. The whole reason this SDK exists is that we don't want to write
+that code.
+
+## Forbidden Pattern 2: Loose domain types (loses domain-specific advantage)
+
+These types are LOAD-BEARING. Do not relax them under any circumstances:
+
+- `ZenginShorui = '11' | '12'` — NEVER widen to `string` or accept `'21'`
+- `GmoEnvironment = 'sunabar' | 'staging' | 'production'` — NEVER add free-form
+- `ResidenceStatus = { kind: 'valid' } | { kind: 'tokurei_kikan' } | ...` —
+  NEVER collapse to a string field
+
+If a Cursor suggestion proposes "let's just make this a string for flexibility",
+that is a **regression**. Reject it.
+
+## Forbidden Pattern 3: Excel-friendly outputs (loses MCP-era advantage)
+
+We are replacing Excel-driven workflows, not augmenting them.
+
+- NEVER write functions that "export to CSV for the user to upload manually"
+- NEVER add a `.toExcelRow()` helper
+- NEVER suggest "the user can copy-paste this into a spreadsheet"
+
+If a feature seems to need an Excel intermediate, the right answer is:
+- Use the JSON bulk transfer API
+- Or generate a `.dat` Zengin file directly with `@sugukuru/zengin-format`
+
+## Forbidden Pattern 4: Synchronous patterns that block
+
+- NEVER use `fs.readFileSync` outside of build scripts
+- NEVER use `child_process.execSync`
+- NEVER use synchronous `Buffer` operations on user input larger than 1KB
+
+Banking operations are time-sensitive. Sync I/O blocks the event loop and
+can cause webhook timeouts.
+
+## Forbidden Pattern 5: GMO-only assumptions in shared packages
+
+The packages `@sugukuru/zengin-format` and `@sugukuru/gmo-aozora-webhook` are
+designed to work with **any Japanese bank** that uses the same standards.
+
+In `packages/zengin-format/**`:
+- NEVER hardcode "0310" (GMO Aozora's bank code)
+- NEVER reference `gmoAozora` or `private:account` scopes
+- NEVER import from `@sugukuru/gmo-aozora-sdk`
+
+In `packages/webhook/**`:
+- NEVER assume specific event types beyond `va-deposit-transaction`
+- NEVER hardcode GMO's signature header name without parameterization
+
+GMO-specific code belongs in `packages/core` only.
+
+## Self-check before suggesting code
+
+Before proposing any change, ask yourself:
+
+1. Does this regress one of our 3 differentiation axes?
+2. Does this look like something the official Node SDK would do?
+3. Would this still work if a different Japanese bank adopted this package?
+
+If "yes" to #1 or #2, or "no" to #3 (in shared packages), revise.

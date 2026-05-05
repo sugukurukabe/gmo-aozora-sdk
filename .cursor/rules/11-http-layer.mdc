@@ -1,0 +1,97 @@
+---
+description: HTTP client layer rules — retry, rate limiting, logger, request IDs
+alwaysApply: false
+globs:
+  - "packages/core/src/http/**"
+---
+
+# HTTP Layer
+
+## HttpClient Design
+
+`HttpClient` wraps undici's `fetch` and provides:
+1. Base URL construction (environment-aware, per `GmoEnvironment`)
+2. `x-access-token` header injection (from `TokenStorage`)
+3. `Accept: application/json;charset=UTF-8` header
+4. Per-request UUIDv7 `x-request-id` (for idempotency + tracing)
+5. Zod schema validation of responses (throw on validation failure)
+6. Retry on transient errors
+7. Token-bucket rate limiting
+
+## Headers
+
+```
+x-access-token: <accessToken>          // NOT Authorization: Bearer
+Accept: application/json;charset=UTF-8
+Content-Type: application/json;charset=UTF-8  // POST/PUT only
+x-request-id: <uuidv7>                 // generated per request
+```
+
+Never use `Authorization: Bearer`. The GMO API uses `x-access-token`.
+
+## Retry Strategy
+
+Retry on these status codes: `429`, `500`, `502`, `503`, `504`
+Also retry on network errors: `ECONNRESET`, `ETIMEDOUT`, fetch failures
+
+Do NOT retry client errors: `400`, `401`, `403`, `404`, `409`, `422`
+
+Strategy:
+- Max 3 attempts (1 initial + 2 retries)
+- Exponential backoff with jitter: 500ms ±10%, 1000ms ±10%, 2000ms ±10%
+- For `429`: respect `Retry-After` header if present
+- Special case for `401`: attempt one token refresh, then retry request once.
+  If the refresh fails, throw `GmoAozoraAuthError` without further retries.
+
+## Rate Limiting
+
+Token-bucket algorithm (configurable, default 10 req/s per GMO guidelines).
+The bucket is shared across all requests from a single `GmoAozoraClient` instance.
+
+## Amount Handling
+
+GMO Aozora returns and accepts amounts as strings: `"5800"` (not `5800`).
+NEVER parse with `Number()` — use the `parseAmount(s: string): bigint` helper.
+NEVER use floating-point arithmetic on monetary values.
+
+## Pagination
+
+GMO uses `nextItemKey` token (not page/offset numbers):
+
+```typescript
+// Always use the async iterator — never manual pagination loops
+for await (const tx of client.corporation.transactions.iterate(params)) {
+  process(tx);
+}
+```
+
+The iterator handles fetching the next page automatically when `nextItemKey`
+is present in the response.
+
+## Response Validation
+
+Every response must be validated against a Zod schema before use:
+
+```typescript
+// ✅ Correct
+const data = GetBalancesResponseSchema.parse(await res.json());
+
+// ❌ Wrong — untyped, skips validation
+const data = await res.json() as GetBalancesResponse;
+```
+
+If validation fails, throw `GmoAozoraValidationError` with the Zod issues.
+
+## Error Mapping
+
+| Status | Error class |
+|---|---|
+| 400 | `GmoAozoraValidationError` |
+| 401 | `GmoAozoraAuthError` (trigger refresh) |
+| 403 | `GmoAozoraPermissionError` |
+| 404 | `GmoAozoraNotFoundError` |
+| 409 | `GmoAozoraConflictError` |
+| 429 | `GmoAozoraRateLimitError` |
+| 500–504 | `GmoAozoraServerError` (retriable) |
+
+Always include `requestId` (from `x-request-id` response header) in the error.

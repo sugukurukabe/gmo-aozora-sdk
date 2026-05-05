@@ -1,0 +1,63 @@
+{
+  "name": "@sugukuru/zengin-format",
+  "version": "0.4.0",
+  "description": "Zengin format (全銀協) file generation for Japanese bank transfers — any bank, not GMO-specific",
+  "author": "Sugukuru Co., Ltd.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sugukurukabe/gmo-aozora-sdk.git",
+    "directory": "packages/zengin-format"
+  },
+  "homepage": "https://github.com/sugukurukabe/gmo-aozora-sdk/tree/main/packages/zengin-format#readme",
+  "bugs": {
+    "url": "https://github.com/sugukurukabe/gmo-aozora-sdk/issues"
+  },
+  "keywords": [
+    "zengin",
+    "全銀",
+    "japanese-bank",
+    "bank-transfer",
+    "payroll",
+    "総合振込",
+    "shift-jis",
+    "typescript",
+    "fintech"
+  ],
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "pnpm exec eslint \"src/**/*.ts\" --max-warnings 0",
+    "pack:dry-run": "npm pack --dry-run"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
+}

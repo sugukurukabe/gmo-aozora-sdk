@@ -1,0 +1,116 @@
+---
+description: Anti-patterns observed in the official Node.js SDK (negative examples)
+alwaysApply: false
+---
+
+# Anti-patterns from the Official SDK
+
+Invoke `@anti-patterns` when in doubt about whether a pattern is correct.
+This rule shows what the official `gmo-aozora-api-nodejs` does, and what we
+do INSTEAD.
+
+## Anti-pattern A1: Untyped response handling
+
+```javascript
+// Official SDK style (DO NOT REPLICATE)
+async function getBalance(accessToken) {
+  const res = await fetch(url, { headers: { 'x-access-token': accessToken } });
+  return res.json(); // Returns `any`, no validation
+}
+```
+
+Our way:
+
+```typescript
+// @sugukuru/gmo-aozora-sdk style
+async function getBalance(accountId: string): Promise<GetBalancesResponse> {
+  return this.http.get('/ganb/api/corporation/v1/accounts/balances', {
+    schema: GetBalancesResponseSchema, // Zod validates
+    query: { accountId },
+  });
+}
+```
+
+## Anti-pattern A2: No retry, no rate limit
+
+```javascript
+// Official: just fetch once, fail on first error
+const res = await fetch(url, options);
+if (!res.ok) throw new Error('Request failed');
+```
+
+Our way: `HttpClient` handles retry (500/502/503/504/429), rate limiting
+(token bucket), and 401-triggered token refresh. See `packages/core/src/http/`.
+
+## Anti-pattern A3: Hardcoded string parameters everywhere
+
+```javascript
+// Official: shorui codes as strings, no validation
+generateZenginFile({ shorui: '11', ... }); // OK
+generateZenginFile({ shorui: '21', ... }); // ALSO compiles, BUG
+generateZenginFile({ shorui: 'eleven', ... }); // ALSO compiles, BUG
+```
+
+Our way:
+
+```typescript
+// @sugukuru/zengin-format
+import { ZENGIN_SHORUI } from '@sugukuru/zengin-format';
+generateZenginFile({ shorui: ZENGIN_SHORUI.KYUYO, ... }); // ✅ '11' for payroll
+generateZenginFile({ shorui: ZENGIN_SHORUI.SHOYO, ... }); // ✅ '12' for bonus
+generateZenginFile({ shorui: '21', ... }); // ❌ Type error: '21' not in '11' | '12'
+```
+
+## Anti-pattern A4: Webhook verification with `==`
+
+```javascript
+// Official-ish style: vulnerable to timing attacks
+function verify(body, signature, secret) {
+  const expected = crypto.createHmac('sha256', secret).update(body).digest('base64');
+  return signature === expected; // ❌ NEVER use ==
+}
+```
+
+Our way:
+
+```typescript
+// @sugukuru/gmo-aozora-webhook
+import { timingSafeEqual } from 'node:crypto';
+
+function verify(rawBody: Buffer, signature: string, secret: string): boolean {
+  const expected = createHmac('sha256', secret).update(rawBody).digest();
+  const actual = Buffer.from(signature, 'base64');
+  if (expected.length !== actual.length) return false;
+  return timingSafeEqual(expected, actual); // ✅ Constant-time
+}
+```
+
+## Anti-pattern A5: Synchronous file I/O during webhook handling
+
+```javascript
+// Official (or naive): blocks event loop
+app.post('/webhook', (req, res) => {
+  const log = fs.readFileSync('webhook.log', 'utf8'); // ❌ blocks
+  // ...
+});
+```
+
+Our way:
+
+```typescript
+// Async logger, never block the request handler
+app.post('/webhook', async (req, res) => {
+  await logger.info('webhook_received', { eventType });
+  // ...
+});
+```
+
+## When to invoke this rule
+
+Invoke `@anti-patterns` when:
+- You're about to copy-paste a pattern from a tutorial
+- You're not sure if a "simpler" version of the code is acceptable
+- You're tempted to "just match what the official SDK does"
+
+Cursor: if the user invokes `@anti-patterns`, treat it as a hard signal to
+review your suggestion against this rule before finalizing.

@@ -1,0 +1,54 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please describe the use case clearly
+        so we can evaluate whether it fits the SDK's scope.
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Relevant Package
+      options:
+        - "@sugukuru/gmo-aozora-sdk (core)"
+        - "@sugukuru/zengin-format"
+        - "@sugukuru/gmo-aozora-webhook"
+        - "New package"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed API
+      description: |
+        Show the TypeScript API you'd like to see. How would a developer use it?
+      render: typescript
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What workarounds exist today?
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope Check
+      description: Please verify this feature fits the SDK's scope.
+      options:
+        - label: This is relevant to Japanese banking / GMO Aozora
+          required: true
+        - label: This does not require widening `ZenginShorui` or other load-bearing types
+          required: true
