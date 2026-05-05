@@ -1,4 +1,4 @@
-import { OAuthClient, getApiBaseUrl } from './auth/index.js';
+import { OAuthClient, getApiBaseUrl, CORP_PREFIXES } from './auth/index.js';
 import type {
   GmoEnvironment,
   OAuthConfig,
@@ -93,6 +93,7 @@ export class GmoAozoraUserClient {
 
     const http = new HttpClient({
       baseUrl: client.apiBaseUrl,
+      corpPrefix: CORP_PREFIXES[client.environment],
       getAccessToken: () => this.getAccessToken(),
       refreshTokens: () => this.refreshTokens(),
     });

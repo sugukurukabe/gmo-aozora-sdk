@@ -5,18 +5,27 @@ import { generateCodeChallenge, generateCodeVerifier, generateState, verifyState
 export type GmoEnvironment = 'sunabar' | 'staging' | 'production';
 
 const AUTH_BASE_URLS: Record<GmoEnvironment, string> = {
-  sunabar: 'https://sandbox.apigateway.prod.gmo-aozora.com',
+  // Sunabar: https://gmo-aozora.com/sunabar/tutorial/01.html
+  sunabar: 'https://api.sunabar.gmo-aozora.com',
   staging: 'https://stg-api.gmo-aozora.com',
   production: 'https://api.gmo-aozora.com',
 };
 
 const API_BASE_URLS: Record<GmoEnvironment, string> = {
-  sunabar: 'https://sandbox.apigateway.prod.gmo-aozora.com',
+  sunabar: 'https://api.sunabar.gmo-aozora.com',
   staging: 'https://stg-api.gmo-aozora.com',
   production: 'https://api.gmo-aozora.com',
 };
 
-const AUTH_PATH = '/ganb/api/auth/v1';
+// Auth path differs between environments.
+// Sunabar: /auth/v1  (no /ganb/ prefix — confirmed from official Sunabar docs)
+// Staging: /ganb/stg-api/auth/v1  (from official Node.js SDK conf.json)
+// Production: /ganb/api/auth/v1
+const AUTH_PATHS: Record<GmoEnvironment, string> = {
+  sunabar: '/auth/v1',
+  staging: '/ganb/stg-api/auth/v1',
+  production: '/ganb/api/auth/v1',
+};
 
 export const PRIVATE_SCOPES = {
   ACCOUNT: 'private:account',
@@ -25,6 +34,15 @@ export const PRIVATE_SCOPES = {
 } as const;
 
 export type PrivateScope = (typeof PRIVATE_SCOPES)[keyof typeof PRIVATE_SCOPES];
+
+// Corporation API path prefix differs between environments.
+// Sunabar: /corporation/v1  (official docs: api.sunabar.gmo-aozora.com/{type}/v1/{api})
+// Staging/Production: /ganb/api/corporation/v1
+export const CORP_PREFIXES: Record<GmoEnvironment, string> = {
+  sunabar: '/corporation/v1',
+  staging: '/ganb/api/corporation/v1',
+  production: '/ganb/api/corporation/v1',
+};
 
 export type OAuthConfig = {
   environment: GmoEnvironment;
@@ -83,7 +101,8 @@ export class OAuthClient {
     });
 
     const base = getAuthBaseUrl(this.config.environment);
-    const url = `${base}${AUTH_PATH}/authorization?${params.toString()}`;
+    const authPath = AUTH_PATHS[this.config.environment];
+    const url = `${base}${authPath}/authorization?${params.toString()}`;
 
     return { url, session: { codeVerifier, state, scopes: resolvedScopes } };
   }
@@ -162,7 +181,8 @@ export class OAuthClient {
     });
 
     const base = getAuthBaseUrl(this.config.environment);
-    await fetch(`${base}${AUTH_PATH}/tokens/revoke`, {
+    const authPath = AUTH_PATHS[this.config.environment];
+    await fetch(`${base}${authPath}/tokens/revoke`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString(),
@@ -196,7 +216,8 @@ export class OAuthClient {
 
   private async postToken(body: string): Promise<TokenSet> {
     const base = getAuthBaseUrl(this.config.environment);
-    const response = await fetch(`${base}${AUTH_PATH}/token`, {
+    const authPath = AUTH_PATHS[this.config.environment];
+    const response = await fetch(`${base}${authPath}/token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

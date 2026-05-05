@@ -15,6 +15,11 @@ import { generateUuidV7 } from './uuid.js';
 
 const CORP_PREFIX = '/ganb/api/corporation/v1';
 
+// Sunabar uses a different path prefix (no /ganb/api/ segment).
+// Confirmed at https://gmo-aozora.com/sunabar/tutorial/01.html:
+//   "https://api.sunabar.gmo-aozora.com/{{type}}/v1/{{api}}"
+const CORP_PREFIX_SUNABAR = '/corporation/v1';
+
 const RETRIABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 
 type HttpClientConfig = {
@@ -25,6 +30,8 @@ type HttpClientConfig = {
   rateLimiter?: RateLimiter;
   timeoutMs?: number;
   maxRetries?: number;
+  /** Override the corporation API path prefix. Default: /ganb/api/corporation/v1 */
+  corpPrefix?: string;
 };
 
 type GetOpts<T> = {
@@ -70,9 +77,11 @@ export class HttpClient {
   private readonly rateLimiter: RateLimiter;
   private readonly timeoutMs: number;
   private readonly maxRetries: number;
+  private readonly corpPrefix: string;
 
   constructor(config: HttpClientConfig) {
     this.baseUrl = config.baseUrl;
+    this.corpPrefix = config.corpPrefix ?? CORP_PREFIX;
     this.getAccessToken = config.getAccessToken;
     this.refreshTokens = config.refreshTokens;
     this.logger = config.logger ?? new NoopLogger();
@@ -102,7 +111,7 @@ export class HttpClient {
   }
 
   private buildUrl(path: string, query?: Record<string, string | undefined>): string {
-    const fullPath = path.startsWith('/ganb/') ? path : `${CORP_PREFIX}${path}`;
+    const fullPath = path.startsWith('/ganb/') ? path : `${this.corpPrefix}${path}`;
     const url = new URL(`${this.baseUrl}${fullPath}`);
     if (query) {
       for (const [k, v] of Object.entries(query)) {

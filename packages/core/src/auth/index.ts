@@ -1,4 +1,4 @@
-export { OAuthClient, PRIVATE_SCOPES, getApiBaseUrl } from './oauth.js';
+export { OAuthClient, PRIVATE_SCOPES, getApiBaseUrl, CORP_PREFIXES } from './oauth.js';
 export type {
   GmoEnvironment,
   OAuthConfig,

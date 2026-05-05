@@ -32,7 +32,7 @@ describe('PRIVATE_SCOPES', () => {
 describe('getApiBaseUrl', () => {
   it('returns sunabar URL', () => {
     const url = getApiBaseUrl('sunabar');
-    expect(url).toContain('sandbox');
+    expect(url).toContain('sunabar.gmo-aozora.com');
   });
 
   it('returns staging URL', () => {
@@ -43,7 +43,7 @@ describe('getApiBaseUrl', () => {
   it('returns production URL', () => {
     const url = getApiBaseUrl('production');
     expect(url).toContain('api.gmo-aozora.com');
-    expect(url).not.toContain('sandbox');
+    expect(url).not.toContain('sunabar');
     expect(url).not.toContain('stg');
   });
 });
@@ -91,7 +91,7 @@ describe('OAuthClient.buildAuthorizationUrl', () => {
   it('uses sunabar endpoint for sunabar environment', () => {
     const client = makeOAuthClient('sunabar');
     const { url } = client.buildAuthorizationUrl();
-    expect(url).toContain('sandbox');
+    expect(url).toContain('api.sunabar.gmo-aozora.com');
   });
 
   it('generates unique sessions for each call', () => {

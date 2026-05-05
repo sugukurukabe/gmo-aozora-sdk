@@ -25,9 +25,9 @@ const REDIRECT_URI = process.env['GMO_REDIRECT_URI'] ?? 'http://localhost:8080/c
 const PORT = Number(new URL(REDIRECT_URI).port || 8080);
 
 const SUNABAR_AUTH_URL =
-  'https://sandbox.apigateway.prod.gmo-aozora.com/ganb/api/corporation/v1/oauth2/authorization';
+  'https://api.sunabar.gmo-aozora.com/auth/v1/authorization';
 const SUNABAR_TOKEN_URL =
-  'https://sandbox.apigateway.prod.gmo-aozora.com/ganb/api/corporation/v1/oauth2/token';
+  'https://api.sunabar.gmo-aozora.com/auth/v1/token';
 
 const SCOPES = ['private:account', 'private:offline_access'];
 

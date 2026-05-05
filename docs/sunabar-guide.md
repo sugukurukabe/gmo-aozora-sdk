@@ -40,7 +40,7 @@ pnpm sunabar:dry-run
 Sunabar validation harness
 Mode: dry-run
 Environment: GMO_CLIENT_ID=missing, ...
-PKCE session prepared: { stateLength: 43, ... authorizationUrlHost: 'sandbox.apigateway.prod.gmo-aozora.com' }
+PKCE session prepared: { stateLength: 43, ... authorizationUrlHost: 'api.sunabar.gmo-aozora.com' }
 No network calls were made.
 ```
 

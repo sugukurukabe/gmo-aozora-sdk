@@ -22,7 +22,7 @@ describe('GmoAozoraClient', () => {
   it('exposes the API base URL', () => {
     const client = makeClient();
     expect(client.apiBaseUrl).toBeTruthy();
-    expect(client.apiBaseUrl).toContain('sandbox');
+    expect(client.apiBaseUrl).toContain('sunabar.gmo-aozora.com');
   });
 
   it('accepts custom tokenStorage', () => {
@@ -62,28 +62,28 @@ describe('GmoAozoraClient.useUser', () => {
   it('user client exposes apiBaseUrl', () => {
     const client = makeClient();
     const userClient = client.useUser('user-1');
-    expect(userClient.apiBaseUrl).toContain('sandbox');
+    expect(userClient.apiBaseUrl).toContain('sunabar.gmo-aozora.com');
   });
 });
 
 describe('GmoAozoraClient environments', () => {
-  it('sunabar points to sandbox URL', () => {
+  it('sunabar points to sunabar URL', () => {
     const c = new GmoAozoraClient({
       environment: 'sunabar',
       clientId: 'id',
       clientSecret: 'secret',
       redirectUri: 'https://x.com/cb',
     });
-    expect(c.apiBaseUrl).toContain('sandbox');
+    expect(c.apiBaseUrl).toContain('sunabar.gmo-aozora.com');
   });
 
-  it('production does NOT point to sandbox', () => {
+  it('production does NOT point to sunabar', () => {
     const c = new GmoAozoraClient({
       environment: 'production',
       clientId: 'id',
       clientSecret: 'secret',
       redirectUri: 'https://x.com/cb',
     });
-    expect(c.apiBaseUrl).not.toContain('sandbox');
+    expect(c.apiBaseUrl).not.toContain('sunabar');
   });
 });
