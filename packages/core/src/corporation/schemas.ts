@@ -6,21 +6,35 @@ export const AccountSchema = z
   .object({
     accountId: z.string(),
     accountName: z.string(),
-    bankCode: z.string(),
     branchCode: z.string(),
-    accountType: z.string(),
     accountNumber: z.string(),
+    // bankCode / accountType are returned in production but omitted in Sunabar.
+    bankCode: z.string().optional(),
+    accountType: z.string().optional(),
+    // Fields returned by Sunabar (confirmed from live API response).
+    branchName: z.string().optional(),
+    accountTypeCode: z.string().optional(),
+    accountTypeName: z.string().optional(),
+    primaryAccountCode: z.string().optional(),
+    primaryAccountCodeName: z.string().optional(),
+    accountNameKana: z.string().optional(),
+    currencyCode: z.string().optional(),
+    currencyName: z.string().optional(),
     currency: z.string().optional(),
+    transferLimitAmount: z.string().optional(),
   })
-  .strict();
+  .passthrough();
 
 export type Account = z.infer<typeof AccountSchema>;
 
 export const GetAccountsResponseSchema = z
   .object({
     accounts: z.array(AccountSchema),
+    // Returned by Sunabar at root level (confirmed from live API response).
+    baseDate: z.string().optional(),
+    baseTime: z.string().optional(),
   })
-  .strict();
+  .passthrough();
 
 export type GetAccountsResponse = z.infer<typeof GetAccountsResponseSchema>;
 
@@ -34,15 +48,17 @@ export const BalanceSchema = z
     availableBalance: z.string(),
     balanceDate: z.string(),
   })
-  .strict();
+  .passthrough();
 
 export type Balance = z.infer<typeof BalanceSchema>;
 
 export const GetBalancesResponseSchema = z
   .object({
     balances: z.array(BalanceSchema),
+    baseDate: z.string().optional(),
+    baseTime: z.string().optional(),
   })
-  .strict();
+  .passthrough();
 
 export type GetBalancesResponse = z.infer<typeof GetBalancesResponseSchema>;
 

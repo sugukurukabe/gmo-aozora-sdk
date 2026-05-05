@@ -40,6 +40,28 @@ describe('AccountSchema contract fixture', () => {
     expect(result.success).toBe(true);
   });
 
+  it('accepts actual Sunabar response shape (confirmed from live API 2026-05-05)', () => {
+    // This fixture was derived from a real Sunabar API response.
+    // bankCode and accountType are absent — Sunabar returns accountTypeCode/accountTypeName instead.
+    const sunabarShape = {
+      accountId: '0013666',
+      accountName: 'テスト法人口座',
+      branchCode: '001',
+      accountNumber: '1234567',
+      branchName: '本店',
+      accountTypeCode: '1',
+      accountTypeName: '普通',
+      primaryAccountCode: '001',
+      primaryAccountCodeName: '普通預金',
+      accountNameKana: 'ﾃｽﾄ',
+      currencyCode: 'JPY',
+      currencyName: '円',
+      transferLimitAmount: '10000000',
+    };
+    const result = AccountSchema.safeParse(sunabarShape);
+    expect(result.success).toBe(true);
+  });
+
   it('accepts account without optional currency field', () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { currency: _currency, ...minimal } = fixture;
@@ -47,10 +69,13 @@ describe('AccountSchema contract fixture', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects extra fields (strict schema)', () => {
+  it('accepts extra fields (passthrough schema — forward-compatible with live API)', () => {
+    // AccountSchema uses .passthrough() because the live Sunabar API returns
+    // additional fields (branchName, accountTypeCode, etc.) that are not yet
+    // documented in the spec. Strict mode would break on real API responses.
     const withExtra = { ...fixture, futureField: 'value' };
     const result = AccountSchema.safeParse(withExtra);
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it('rejects missing required accountNumber', () => {
