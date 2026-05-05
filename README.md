@@ -4,6 +4,7 @@
 [![npm version](https://badge.fury.io/js/@sugukuru%2Fgmo-aozora-sdk.svg)](https://www.npmjs.com/package/@sugukuru/gmo-aozora-sdk)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Node.js 20+](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
+[![Sunabar validated](https://img.shields.io/badge/Sunabar-validated-success)](docs/sunabar-validation-report.md)
 
 > The first production-grade TypeScript SDK for GMO Aozora Net Bank's Open API.
 >

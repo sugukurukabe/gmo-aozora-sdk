@@ -47,6 +47,11 @@ export const BalanceSchema = z
     bookBalance: z.string().optional(),
     availableBalance: z.string().optional(),
     balanceDate: z.string().optional(),
+    // Sunabar-specific field names (confirmed from live API 2026-05-05)
+    balance: z.string().optional(),
+    withdrawableAmount: z.string().optional(),
+    previousDayBalance: z.string().optional(),
+    previousMonthBalance: z.string().optional(),
   })
   .passthrough();
 
