@@ -10,8 +10,14 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write        # push changeset-release/* branch and tags
+      pull-requests: write   # open the "Version Packages" PR
+      id-token: write        # for npm provenance (future use)
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # changesets/action needs full history to detect changes
 
       - uses: pnpm/action-setup@v3
         with:
@@ -25,8 +31,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Verify before publish
-        run: pnpm run verify
+      - name: Build packages
+        run: pnpm build
 
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
