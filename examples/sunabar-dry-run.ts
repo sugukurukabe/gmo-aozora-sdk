@@ -10,6 +10,7 @@
  *     npx tsx examples/sunabar-dry-run.ts --execute-readonly
  */
 import {
+  GmoAozoraApiError,
   GmoAozoraClient,
   InMemoryTokenStorage,
   PRIVATE_SCOPES,
@@ -37,6 +38,16 @@ function requireEnv(name: string, value: string | undefined): string {
     throw new Error(`Missing required environment variable: ${name}`);
   }
   return value;
+}
+
+function summarizeAccounts(
+  accounts: readonly { accountId: string; branchCode: string; accountNumber: string }[],
+): Array<{ accountId: string; branchCode: string; accountNumber: string }> {
+  return accounts.map((account) => ({
+    accountId: account.accountId,
+    branchCode: account.branchCode,
+    accountNumber: account.accountNumber,
+  }));
 }
 
 const resolvedClientId = clientId ?? 'DRY_RUN_CLIENT_ID';
@@ -99,9 +110,27 @@ const readonlyClient = new GmoAozoraClient({
   tokenStorage: storage,
 }).useUser(userId);
 
-const readonlyAccountId = requireEnv('GMO_ACCOUNT_ID', accountId);
 const accounts = await readonlyClient.corporation.accounts.list();
-const balance = await readonlyClient.corporation.balances.get(readonlyAccountId);
+console.log('Readonly accounts listed:', {
+  accountCount: accounts.length,
+  accounts: summarizeAccounts(accounts),
+});
+
+const readonlyAccountId = accountId ?? accounts[0]?.accountId;
+if (!readonlyAccountId) {
+  throw new Error('No accountId available. Set GMO_ACCOUNT_ID or ensure the token can list accounts.');
+}
+
+let balance;
+try {
+  balance = await readonlyClient.corporation.balances.get(readonlyAccountId);
+} catch (e) {
+  if (e instanceof GmoAozoraApiError && e.code === '220001') {
+    console.error('Balance lookup failed: GMO_ACCOUNT_ID is not a valid accountId for this token.');
+    console.error('Use one of the accountId values printed in "Readonly accounts listed" above.');
+  }
+  throw e;
+}
 
 console.log('Readonly Sunabar checks completed:', {
   accountCount: accounts.length,
