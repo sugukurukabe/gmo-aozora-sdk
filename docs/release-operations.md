@@ -53,6 +53,39 @@ reviewed before release, but they do not block by default because many moderate
 advisories are dev-tooling-only. If a moderate advisory affects runtime code or
 request paths, treat it as a release blocker.
 
+## NPM_TOKEN Setup (GitHub Actions)
+
+For automated CI-based publishing, set `NPM_TOKEN` as a GitHub Actions secret:
+
+1. Create an **Automation** token at [https://www.npmjs.com/settings/sugukuru/tokens](https://www.npmjs.com/settings/sugukuru/tokens)
+   - Choose **Granular Access Token** → Permissions: **Read and write**, Type: **Automation**
+   - Scope: all `@sugukuru/*` packages
+2. Add it to GitHub secrets at [https://github.com/sugukurukabe/gmo-aozora-sdk/settings/secrets/actions/new](https://github.com/sugukurukabe/gmo-aozora-sdk/settings/secrets/actions/new)
+   - Name: `NPM_TOKEN`
+3. Once set, the `release.yml` workflow will automatically publish on every merge to `main` that contains a consumed changeset.
+
+> **Token security**: Never share npm tokens in chat, code, or issue comments.
+> Rotate tokens immediately if exposed. The Automation token type bypasses 2FA
+> for CI but requires explicit package-level scope to limit blast radius.
+
+## Creating a GitHub Release
+
+After publishing to npm, create a GitHub Release from the tag:
+
+```bash
+# If gh CLI is available:
+gh release create "@sugukuru/gmo-aozora-sdk@0.5.0" \
+  --title "v0.5.0 — <summary>" \
+  --notes-file RELEASE_NOTES.md \
+  --prerelease
+```
+
+Or manually at [https://github.com/sugukurukabe/gmo-aozora-sdk/releases/new](https://github.com/sugukurukabe/gmo-aozora-sdk/releases/new):
+- Tag: `@sugukuru/gmo-aozora-sdk@0.5.0` (already pushed by `pnpm changeset publish`)
+- Title: `v0.5.0 — <brief description>`
+- Body: paste the relevant section from `packages/core/CHANGELOG.md`
+- Mark as **pre-release** until Sunabar validation is complete
+
 ## Changesets
 
 Create a changeset for every user-visible change:

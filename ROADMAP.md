@@ -2,6 +2,24 @@
 
 > Last updated: 2026-05-05
 
+## v0.5.0 (released — 2026-05-05) 🚀
+
+**First public release on npm.**
+
+- ✅ All 3 packages published: `@sugukuru/gmo-aozora-sdk`, `@sugukuru/zengin-format`, `@sugukuru/gmo-aozora-webhook`
+- ✅ CJS + ESM + TypeScript declarations verified with consumer smoke test from `npm install`
+- ✅ Sunabar validation harness (`pnpm sunabar:dry-run`) and step-by-step guide (`docs/sunabar-guide.md`)
+- ✅ OAuth 2.0 PKCE S256 callback server example (`examples/oauth-callback-server.ts`)
+- ✅ Quick Start rewritten for immediate usability: direct token injection + full OAuth flow
+- ✅ 277 tests passing (core 167, zengin-format 67, webhook 43)
+- ✅ `pnpm run verify` gate: typecheck, test, lint, build, dist smoke, public API, format, docs snippets, examples typecheck, security scan, audit, metadata check, pack dry-run
+
+### npm links
+
+- [`@sugukuru/gmo-aozora-sdk@0.5.0`](https://www.npmjs.com/package/@sugukuru/gmo-aozora-sdk)
+- [`@sugukuru/zengin-format@0.5.0`](https://www.npmjs.com/package/@sugukuru/zengin-format)
+- [`@sugukuru/gmo-aozora-webhook@0.5.0`](https://www.npmjs.com/package/@sugukuru/gmo-aozora-webhook)
+
 ## v0.4.0 (completed — 2026-05-05)
 
 - ✅ `@sugukuru/zengin-format` v1.0 — 120-byte Shift_JIS Zengin file generation (67 tests, including golden snapshots)
@@ -59,7 +77,7 @@ Items that MUST be done before `git push` and `npm publish`:
 | Sunabar: transfer create + pollResult | ⏳ | Needs live credential |
 | Sunabar: webhook delivery + signature verify | ⏳ | Needs live endpoint |
 | Zengin `.dat` accepted by test bank | ⏳ | Needs live submission |
-| Changeset version bump committed | ⏳ | `pnpm changeset` |
+| Changeset version bump committed | ✅ | v0.5.0 published to npm |
 
 ## Corporation API Coverage
 
