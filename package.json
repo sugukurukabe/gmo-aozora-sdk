@@ -25,7 +25,15 @@
     "pack:dry-run": "node scripts/pack-dry-run.mjs",
     "verify": "pnpm typecheck && pnpm test && pnpm lint && pnpm build && pnpm dist:smoke && pnpm api:check && pnpm format:check && pnpm docs:snippets && pnpm docs:typecheck && pnpm examples:typecheck && pnpm security:scan && pnpm audit:security && pnpm metadata:check && pnpm pack:dry-run",
     "ci": "pnpm run verify",
-    "changeset": "changeset"
+    "changeset": "changeset",
+    "sunabar:dry-run": "tsx examples/sunabar-dry-run.ts",
+    "sunabar:readonly": "tsx examples/sunabar-dry-run.ts --execute-readonly",
+    "sunabar:auth": "node scripts/sunabar-oauth-callback.mjs"
+  },
+  "dependencies": {
+    "@sugukuru/gmo-aozora-sdk": "workspace:*",
+    "@sugukuru/gmo-aozora-webhook": "workspace:*",
+    "@sugukuru/zengin-format": "workspace:*"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.0",
@@ -37,6 +45,7 @@
     "eslint-config-prettier": "^10.1.8",
     "express": "^5.2.1",
     "prettier": "^3.8.3",
+    "tsx": "^4.21.0",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"
   }

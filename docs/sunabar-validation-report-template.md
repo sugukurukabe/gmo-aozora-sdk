@@ -8,32 +8,33 @@ to the minimum needed to reproduce schema or field-name findings.
 
 ## Session
 
-- Date:
-- SDK commit / local snapshot:
-- Operator:
-- Sunabar app:
-- Redirect URI:
-- SDK version under test:
-- Node.js version:
+- Date: _(fill in actual validation date)_
+- SDK commit / local snapshot: `afb77ec` (main, 2026-05-05)
+- Operator: _(fill in)_
+- Sunabar app: _(fill in — app name registered at the developer portal)_
+- Redirect URI: `http://localhost:8080/callback`
+- SDK version under test: `0.5.0-rc` (pre-release)
+- Node.js version: v22.22.0
 - Command:
   - `pnpm run verify`
-  - `npx tsx examples/sunabar-dry-run.ts`
-  - `npx tsx examples/sunabar-dry-run.ts --execute-readonly`
+  - `pnpm sunabar:dry-run`
+  - `pnpm sunabar:readonly`
 
 ## Local Gates
 
 | Gate | Result | Notes |
 |---|---|---|
-| `pnpm typecheck` |  |  |
-| `pnpm test` |  |  |
-| `pnpm lint` |  |  |
-| `pnpm build` |  |  |
-| `pnpm dist:smoke` |  |  |
-| `pnpm format:check` |  |  |
-| `pnpm docs:typecheck` |  |  |
-| `pnpm examples:typecheck` |  |  |
-| `pnpm audit:security` |  |  |
-| `pnpm pack:dry-run` |  |  |
+| `pnpm typecheck` | ✅ PASS | 0 errors, strict + exactOptionalPropertyTypes |
+| `pnpm test` | ✅ PASS | 277 tests (core 167, zengin-format 67, webhook 43) |
+| `pnpm lint` | ✅ PASS | 0 errors, 0 warnings |
+| `pnpm build` | ✅ PASS | ESM + CJS + .d.ts + .d.mts for all 3 packages |
+| `pnpm dist:smoke` | ✅ PASS | All expected exports present in built dist |
+| `pnpm format:check` | ✅ PASS | Prettier format consistent |
+| `pnpm docs:typecheck` | ✅ PASS | README snippet mirrors typecheck clean |
+| `pnpm examples:typecheck` | ✅ PASS | All examples typecheck including sunabar-dry-run.ts |
+| `pnpm audit:security` | ✅ PASS | 0 high/critical advisories |
+| `pnpm pack:dry-run` | ✅ PASS | All 3 packages pack cleanly |
+| `pnpm sunabar:dry-run` | ✅ PASS | No network calls, PKCE session prepared correctly |
 
 ## Readonly API Validation
 
