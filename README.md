@@ -34,13 +34,9 @@
 
 ## Quick start
 
-> **npm は近日公開予定です。** 現在は GitHub から直接インストールしてください:
->
-> ```bash
-> npm install sugukurukabe/gmo-aozora-sdk
-> ```
->
-> npm リリース後は `npm install @sugukuru/gmo-aozora-sdk` でインストールできます。
+```bash
+npm install @sugukuru/gmo-aozora-sdk
+```
 
 ---
 
