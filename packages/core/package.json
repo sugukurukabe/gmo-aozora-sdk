@@ -1,6 +1,6 @@
 {
   "name": "@sugukuru/gmo-aozora-sdk",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Production-grade TypeScript SDK for GMO Aozora Net Bank's Open API — OAuth PKCE, typed corporation APIs, retry, rate limiting",
   "author": "Sugukuru Co., Ltd.",
   "license": "Apache-2.0",

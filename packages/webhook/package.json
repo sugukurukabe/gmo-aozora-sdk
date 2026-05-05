@@ -1,6 +1,6 @@
 {
   "name": "@sugukuru/gmo-aozora-webhook",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Webhook HMAC-SHA256 verification for GMO Aozora Net Bank — framework-agnostic with Express middleware",
   "author": "Sugukuru Co., Ltd.",
   "license": "Apache-2.0",

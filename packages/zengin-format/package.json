@@ -1,6 +1,6 @@
 {
   "name": "@sugukuru/zengin-format",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Zengin format (全銀協) file generation for Japanese bank transfers — any bank, not GMO-specific",
   "author": "Sugukuru Co., Ltd.",
   "license": "Apache-2.0",
