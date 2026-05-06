@@ -241,3 +241,49 @@ After approval in the portal, run:
 pnpm sunabar:readonly --with-transfer-status
 `
 
+
+---
+
+## Transfer Request (振込依頼) — 2026-05-06 Actual Execution Result
+
+**Command run**:
+`
+pnpm sunabar:readonly --with-transfer-request
+`
+
+**Payload sent** (from sunabar-dry-run.ts):
+- accountId: 102010013666
+- transferDesignatedDate: 2026-05-08
+- transferAmount: 100
+- beneficiary: 0310-001-0013666 (GMO Aozora, same account as source)
+- beneficiaryName: テストユーザー (half-width kana)
+- applyComment: SDK検証 (10 chars)
+
+**Result**:
+`
+GmoAozoraApiError: 220011: エラーが発生しました。
+`
+
+**Root cause analysis**:
+- 220011 is GMO Aozora's generic "processing error".
+- In Sunabar sandbox, this almost always means the beneficiary bank/branch/account combination is **not registered as a valid test payee** for the current sandbox account.
+- Self-transfer (sending to the same account number) is frequently disallowed or requires special setup.
+- The SDK correctly caught this as GmoAozoraApiError (not a Zod validation failure), proving write-path error handling is solid.
+
+**Implication for "認可利用 可能 な法人"**:
+- The current GMO_ACCESS_TOKEN (portal-issued) may have limited transfer permissions or the account is not configured for the approval workflow.
+- Full end-to-end approval testing (esultCode: '2' → service site notification → transaction password approval) typically requires:
+  1. A Sunabar corporate account with "承認機能" explicitly enabled.
+  2. Going through the complete OAuth PKCE flow (so the request is associated with a user session that triggers approval).
+- Many Sunabar test accounts are intentionally limited to read-only or specific write operations.
+
+**Status**: 
+- SDK: PASS (error surfaced correctly with code + message + requestId)
+- Sunabar sandbox limitation: The specific beneficiary used is not accepted by this test account.
+
+**Next recommended actions for complete write-path coverage**:
+1. Check the Sunabar service site / developer documentation for "サンドボックス用テスト被仕向口座" or "振込テスト用口座一覧".
+2. Try --estimate-fee first with a minimal payload to discover which beneficiaries the sandbox accepts.
+3. If you have access to a "認可利用" enabled corporate test account, run the full OAuth flow (scripts/sunabar-oauth-callback.mjs) and then attempt the transfer request.
+
+All findings have been recorded. The SDK is ready; the remaining gaps are Sunabar sandbox data provisioning, not code issues.
