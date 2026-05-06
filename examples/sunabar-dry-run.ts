@@ -11,6 +11,7 @@
  */
 import {
   GmoAozoraApiError,
+  GmoAozoraValidationError,
   GmoAozoraClient,
   InMemoryTokenStorage,
   PRIVATE_SCOPES,
@@ -215,8 +216,14 @@ if (withBulkTransferStatus) {
     console.log('Bulk transfer status response keys:', Object.keys(bulkStatusResponse));
     console.log('Bulk transfer status list count:', bulkStatusResponse.transferStatusList.length);
   } catch (e) {
-    const message = e instanceof GmoAozoraApiError ? `${e.code}: ${e.message}` : String(e);
-    console.error('Bulk transfer status query failed:', message);
+    if (e instanceof GmoAozoraValidationError) {
+      console.error('Bulk transfer status validation failed. Issues:');
+      console.error(JSON.stringify(e.issues, null, 2));
+    } else if (e instanceof GmoAozoraApiError) {
+      console.error(`Bulk transfer status query failed: ${e.code}: ${e.message}`);
+    } else {
+      console.error('Bulk transfer status query failed:', String(e));
+    }
   }
 }
 
