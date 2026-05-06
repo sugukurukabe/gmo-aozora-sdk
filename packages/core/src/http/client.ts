@@ -15,11 +15,6 @@ import { generateUuidV7 } from './uuid.js';
 
 const CORP_PREFIX = '/ganb/api/corporation/v1';
 
-// Sunabar uses a different path prefix (no /ganb/api/ segment).
-// Confirmed at https://gmo-aozora.com/sunabar/tutorial/01.html:
-//   "https://api.sunabar.gmo-aozora.com/{{type}}/v1/{{api}}"
-const CORP_PREFIX_SUNABAR = '/corporation/v1';
-
 const RETRIABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 
 type HttpClientConfig = {
