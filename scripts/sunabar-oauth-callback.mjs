@@ -39,6 +39,11 @@ if (!CLIENT_ID || !CLIENT_SECRET) {
   process.exit(1);
 }
 
+console.log('=== Sunabar OAuth PKCE Helper ===');
+console.log('Redirect URI that will be used:', REDIRECT_URI);
+console.log('IMPORTANT: This MUST exactly match the redirect URI registered in the Sunabar developer portal.');
+console.log('If you see "Forbidden", double-check the redirect URI in the portal and set GMO_REDIRECT_URI accordingly.\n');
+
 // --- PKCE S256 ---
 const verifier = randomBytes(48)
   .toString('base64url')
@@ -128,7 +133,12 @@ const tokenRes = await fetch(SUNABAR_TOKEN_URL, {
 
 if (!tokenRes.ok) {
   const body = await tokenRes.text();
-  console.error('Token exchange failed:', tokenRes.status, body);
+  console.error('\n=== Token exchange failed ===');
+  console.error('Status:', tokenRes.status);
+  console.error('Response body:', body);
+  console.error('\nSent redirect_uri:', REDIRECT_URI);
+  console.error('This redirect_uri MUST exactly match what you registered in the Sunabar developer portal.');
+  console.error('Common causes: trailing slash mismatch, http vs https, port difference, or path difference.');
   process.exit(1);
 }
 
