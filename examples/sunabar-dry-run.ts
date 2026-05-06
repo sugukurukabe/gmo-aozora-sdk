@@ -26,6 +26,7 @@ const mode: HarnessMode = process.argv.includes('--execute-readonly')
 const withTransactions = process.argv.includes('--with-transactions');
 const withVirtualAccounts = process.argv.includes('--with-virtual-accounts');
 const withTransferStatus = process.argv.includes('--with-transfer-status');
+const withBulkTransferStatus = process.argv.includes('--with-bulk-transfer-status');
 
 const clientId = process.env['GMO_CLIENT_ID'];
 const clientSecret = process.env['GMO_CLIENT_SECRET'];
@@ -199,6 +200,23 @@ if (withTransferStatus) {
   } catch (e) {
     const message = e instanceof GmoAozoraApiError ? `${e.code}: ${e.message}` : String(e);
     console.error('Transfer status query failed:', message);
+  }
+}
+
+if (withBulkTransferStatus) {
+  console.log('\nFetching bulk transfer status (総合振込状況照会)...');
+  try {
+    const bulkStatusResponse = await readonlyClient.corporation.bulkTransfers.getStatus({
+      accountId: readonlyAccountId,
+      queryKeyClass: '2', // 振込一括照会 (date range friendly)
+      dateFrom: '2026-05-01',
+      dateTo: '2026-05-06',
+    });
+    console.log('Bulk transfer status response keys:', Object.keys(bulkStatusResponse));
+    console.log('Bulk transfer status list count:', bulkStatusResponse.transferStatusList.length);
+  } catch (e) {
+    const message = e instanceof GmoAozoraApiError ? `${e.code}: ${e.message}` : String(e);
+    console.error('Bulk transfer status query failed:', message);
   }
 }
 
