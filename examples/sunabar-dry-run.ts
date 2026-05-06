@@ -28,6 +28,7 @@ const withTransactions = process.argv.includes('--with-transactions');
 const withVirtualAccounts = process.argv.includes('--with-virtual-accounts');
 const withTransferStatus = process.argv.includes('--with-transfer-status');
 const withBulkTransferStatus = process.argv.includes('--with-bulk-transfer-status');
+const withCreateVirtualAccount = process.argv.includes('--create-virtual-account');
 
 const clientId = process.env['GMO_CLIENT_ID'];
 const clientSecret = process.env['GMO_CLIENT_SECRET'];
@@ -224,6 +225,31 @@ if (withBulkTransferStatus) {
       console.error(`Bulk transfer status query failed: ${e.code}: ${e.message}`);
     } else {
       console.error('Bulk transfer status query failed:', String(e));
+    }
+  }
+}
+
+if (withCreateVirtualAccount) {
+  console.log('\nCreating a virtual account (振込入金口座発行) — this is a write operation...');
+  const uniqueLabel = `Sunabar-Validation-${Date.now()}`;
+  try {
+    const created = await readonlyClient.corporation.virtualAccounts.create({
+      accountId: readonlyAccountId,
+      label: uniqueLabel,
+    });
+    console.log('Virtual account created successfully!');
+    console.log('Created virtual account keys:', Object.keys(created));
+    console.log('virtualAccountNumber:', created.virtualAccountNumber);
+    console.log('status:', created.status);
+  } catch (e) {
+    if (e instanceof GmoAozoraValidationError) {
+      console.error('Create virtual account validation failed. Issues:');
+      console.error(JSON.stringify(e.issues, null, 2));
+    } else if (e instanceof GmoAozoraApiError) {
+      console.error(`Create virtual account failed: ${e.code}: ${e.message}`);
+      console.error('(This may require approval in the Sunabar portal or test data limitations.)');
+    } else {
+      console.error('Create virtual account failed:', String(e));
     }
   }
 }
