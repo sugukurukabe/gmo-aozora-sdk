@@ -11,6 +11,7 @@
  */
 import {
   GmoAozoraApiError,
+  GmoAozoraAuthError,
   GmoAozoraValidationError,
   GmoAozoraClient,
   InMemoryTokenStorage,
@@ -118,14 +119,23 @@ if (mode === 'dry-run') {
   process.exit(0);
 }
 
-const storage = new InMemoryTokenStorage();
+if (isPortalTokenMode) {
+  console.log('\n[Mode] Sunabar Portal Token (direct token injection, no OAuth refresh)');
+  console.log('  This mode uses the token you copied from https://portal.sunabar.gmo-aozora.com');
+  console.log('  If you get 401, please generate a fresh token in the portal and try again.');
+} else {
+  console.log('\n[Mode] Full OAuth PKCE (with automatic token refresh)');
+}
+
 const userId = 'sunabar-validation';
-const resolvedRefreshToken = refreshToken || '';
+const isPortalTokenMode = !clientId || !clientSecret;
+
+const storage = new InMemoryTokenStorage();
 await storage.save(userId, {
   accessToken: requireEnv('GMO_ACCESS_TOKEN', accessToken),
-  refreshToken: resolvedRefreshToken,
-  // If a refresh token is provided, assume the access token is fresh (1 hour validity).
-  // The SDK will refresh automatically when needed.
+  // In portal token mode we never attempt refresh.
+  // In full OAuth mode we store whatever refresh token was provided.
+  refreshToken: isPortalTokenMode ? '' : (refreshToken || ''),
   expiresAt: Date.now() + 3_600_000,
   tokenType: 'Bearer',
   scope: PRIVATE_SCOPES.ACCOUNT + ' ' + PRIVATE_SCOPES.OFFLINE_ACCESS,
@@ -134,8 +144,6 @@ await storage.save(userId, {
 const readonlyClient = new GmoAozoraClient({
   environment: 'sunabar',
   clientId: clientId ?? 'SUNABAR_PORTAL_USER',
-  // For portal-issued tokens, clientSecret is not used for token refresh.
-  // Fall back to a placeholder so the constructor is satisfied.
   clientSecret: clientSecret ?? 'PORTAL_TOKEN_NO_REFRESH_NEEDED',
   redirectUri,
   defaultScopes: [PRIVATE_SCOPES.ACCOUNT, PRIVATE_SCOPES.OFFLINE_ACCESS],
@@ -323,6 +331,17 @@ if (withTransferRequest) {
       console.error(JSON.stringify(e.issues, null, 2));
     } else if (e instanceof GmoAozoraApiError) {
       console.error(`Transfer request failed: ${e.code}: ${e.message}`);
+    } else if (e instanceof GmoAozoraAuthError) {
+      if (isPortalTokenMode) {
+        console.error('\n[Portal Token Error]');
+        console.error('Your Sunabar portal token is no longer valid (expired or not scoped to this account).');
+        console.error('Please go to https://portal.sunabar.gmo-aozora.com, issue a fresh access token,');
+        console.error('and set it again with:');
+        console.error('  $env:GMO_ACCESS_TOKEN="new-token-from-portal"');
+        console.error('  $env:GMO_ACCOUNT_ID="102010013512"');
+      } else {
+        console.error('OAuth token refresh failed:', String(e));
+      }
     } else {
       console.error('Transfer request failed:', String(e));
     }
