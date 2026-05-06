@@ -29,6 +29,7 @@ const withVirtualAccounts = process.argv.includes('--with-virtual-accounts');
 const withTransferStatus = process.argv.includes('--with-transfer-status');
 const withBulkTransferStatus = process.argv.includes('--with-bulk-transfer-status');
 const withCreateVirtualAccount = process.argv.includes('--create-virtual-account');
+const withTransferRequest = process.argv.includes('--with-transfer-request');
 
 const clientId = process.env['GMO_CLIENT_ID'];
 const clientSecret = process.env['GMO_CLIENT_SECRET'];
@@ -250,6 +251,55 @@ if (withCreateVirtualAccount) {
       console.error('(This may require approval in the Sunabar portal or test data limitations.)');
     } else {
       console.error('Create virtual account failed:', String(e));
+    }
+  }
+}
+
+if (withTransferRequest) {
+  console.log('\n=== WRITE OPERATION: 振込依頼 (Transfer Request) ===');
+  console.log('WARNING: This will submit a real transfer request in Sunabar.');
+  console.log('You MUST approve (or cancel) it manually in the Sunabar service site.');
+  console.log('Using 100 yen for safety. Please approve ONLY if you intend to test.');
+
+  const transferDate = '2026-05-08'; // assume business day; adjust if needed
+  try {
+    const transferRes = await readonlyClient.corporation.transfers.create({
+      accountId: readonlyAccountId,
+      remitterName: 'Sunabar SDK Test',
+      transferDesignatedDate: transferDate,
+      transferDateHolidayCode: '1',
+      transfers: [
+        {
+          itemId: '1',
+          transferAmount: '100',
+          beneficiaryBankCode: '0310', // GMO Aozora (test)
+          beneficiaryBankName: 'GMOあおぞら',
+          beneficiaryBranchCode: '001',
+          beneficiaryBranchName: '本店',
+          accountTypeCode: '1',
+          accountNumber: '0013666', // same account or a test one you control
+          beneficiaryName: 'ﾃｽﾄ ﾕｰｻﾞｰ',
+        },
+      ],
+      applyComment: 'Sunabar SDK validation test - APPROVE ONLY FOR TESTING',
+    });
+
+    console.log('\nTransfer request submitted successfully!');
+    console.log('applyNo:', transferRes.applyNo);
+    console.log('resultCode:', transferRes.resultCode, '(2 = pending approval)');
+    console.log('\nNext steps:');
+    console.log('1. Go to Sunabar service site (法人ログイン)');
+    console.log('2. Check notifications or "お知らせ" for the transfer request');
+    console.log('3. Approve using your transaction password (or cancel)');
+    console.log('4. Then run with --with-transfer-status to check the result');
+  } catch (e) {
+    if (e instanceof GmoAozoraValidationError) {
+      console.error('Transfer request validation failed. Issues:');
+      console.error(JSON.stringify(e.issues, null, 2));
+    } else if (e instanceof GmoAozoraApiError) {
+      console.error(`Transfer request failed: ${e.code}: ${e.message}`);
+    } else {
+      console.error('Transfer request failed:', String(e));
     }
   }
 }
