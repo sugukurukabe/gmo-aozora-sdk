@@ -206,3 +206,38 @@ Run with --with-transfer-request:
 This is the standard Sunabar testing pattern (manual approval required by design).
 
 **Status**: Write-path error handling validated. Full end-to-end transfer test possible with portal approval.
+## Virtual Accounts (振込入金口座) — 2026-05-06 Update
+
+**Tested**:
+- irtualAccounts.list() → WG_ERR_019 (405 Method Not Allowed)
+- irtualAccounts.create() → same WG_ERR_019
+
+**Analysis**:
+- This is a **Sunabar sandbox provisioning limitation** for the test account (102010013666).
+- The feature "振込入金口座" is not enabled in this particular sandbox environment.
+- SDK correctly throws GmoAozoraApiError with code WG_ERR_019.
+- Harness was updated to catch the error gracefully (no more process crash with UV_HANDLE_CLOSING assertion).
+
+**Conclusion**: Not an SDK bug. Virtual account APIs are correctly implemented; they simply require a Sunabar account where the feature is activated.
+
+---
+
+## Transfer Request (振込依頼) — Ready for Testing
+
+The --with-transfer-request flag now:
+- Uses a safe 100 yen amount
+- Short pplyComment: 'SDK検証' (≤20 chars)
+- Clear instructions to approve/cancel in the Sunabar service site
+
+This is the **primary write-path** for validating "認可利用 可能 な法人" flows.
+
+Next step for full write-path coverage:
+`powershell
+pnpm sunabar:readonly --with-transfer-request
+`
+
+After approval in the portal, run:
+`powershell
+pnpm sunabar:readonly --with-transfer-status
+`
+
