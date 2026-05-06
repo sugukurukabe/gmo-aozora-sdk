@@ -25,6 +25,7 @@ const mode: HarnessMode = process.argv.includes('--execute-readonly')
 
 const withTransactions = process.argv.includes('--with-transactions');
 const withVirtualAccounts = process.argv.includes('--with-virtual-accounts');
+const withTransferStatus = process.argv.includes('--with-transfer-status');
 
 const clientId = process.env['GMO_CLIENT_ID'];
 const clientSecret = process.env['GMO_CLIENT_SECRET'];
@@ -180,6 +181,24 @@ if (withVirtualAccounts) {
   console.log('Virtual account count:', vaResponse.virtualAccounts.length);
   if (vaResponse.virtualAccounts.length > 0) {
     console.log('First virtual account sample keys:', Object.keys(vaResponse.virtualAccounts[0]));
+  }
+}
+
+if (withTransferStatus) {
+  console.log('\nFetching transfer status (振込状況照会)...');
+  try {
+    const statusResponse = await readonlyClient.corporation.transfers.getStatus({
+      accountId: readonlyAccountId,
+      queryKeyClass: '1', // 振込申請照会
+    });
+    console.log('Transfer status response keys:', Object.keys(statusResponse));
+    console.log('Transfer status list count:', statusResponse.transferStatusList.length);
+    if (statusResponse.transferStatusList.length > 0) {
+      console.log('First status item keys:', Object.keys(statusResponse.transferStatusList[0]));
+    }
+  } catch (e) {
+    const message = e instanceof GmoAozoraApiError ? `${e.code}: ${e.message}` : String(e);
+    console.error('Transfer status query failed:', message);
   }
 }
 
