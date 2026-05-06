@@ -88,7 +88,16 @@ export type Transaction = z.infer<typeof TransactionSchema>;
 export const GetTransactionsResponseSchema = z
   .object({
     transactions: z.array(TransactionSchema),
+    // Pagination: GMO production uses nextItemKey; Sunabar uses hasNext/count
     nextItemKey: z.string().optional(),
+    hasNext: z.boolean().optional(),
+    count: z.number().optional(),
+    // Sunabar root-level metadata
+    accountId: z.string().optional(),
+    currencyCode: z.string().optional(),
+    currencyName: z.string().optional(),
+    dateFrom: z.string().optional(),
+    dateTo: z.string().optional(),
   })
   .passthrough();
 

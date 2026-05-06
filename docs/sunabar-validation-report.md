@@ -1,4 +1,4 @@
-# Sunabar Validation Report
+﻿# Sunabar Validation Report
 
 **Date**: 2026-05-05  
 **SDK Version**: v0.5.0 (pre-release)  
@@ -9,7 +9,7 @@
 
 ## Summary
 
-✅ **All critical paths validated successfully**
+笨・**All critical paths validated successfully**
 
 - OAuth PKCE flow (authorization URL generation)
 - Portal-issued token injection
@@ -53,7 +53,7 @@ x-access-token: <portal-token>
       "accountNumber": "0013666",
       "branchName": "...",
       "accountTypeCode": "1",
-      "accountTypeName": "普通",
+      "accountTypeName": "譎ｮ騾・,
       ...
     }
   ],
@@ -62,7 +62,7 @@ x-access-token: <portal-token>
 }
 ```
 
-**Schema Compatibility**: ✅ (required `bankCode`/`accountType` relaxed to optional; additional Sunabar fields accepted via `.passthrough()`)
+**Schema Compatibility**: 笨・(required `bankCode`/`accountType` relaxed to optional; additional Sunabar fields accepted via `.passthrough()`)
 
 ### 2. Balances
 
@@ -89,7 +89,37 @@ x-access-token: <portal-token>
 ]
 ```
 
-**Schema Compatibility**: ✅ (added optional Sunabar-specific fields; legacy `bookBalance`/`availableBalance`/`balanceDate` kept for production compatibility)
+**Schema Compatibility**: 笨・(added optional Sunabar-specific fields; legacy `bookBalance`/`availableBalance`/`balanceDate` kept for production compatibility)
+
+### 3. Transactions (譏守ｴｰ辣ｧ莨・
+
+**Request**:
+```http
+GET /corporation/v1/accounts/transactions?accountId=102010013666
+x-access-token: <portal-token>
+```
+
+**Response Keys (actual Sunabar shape)**:
+```json
+{
+  "transactions": [],
+  "accountId": "102010013666",
+  "currencyCode": "JPY",
+  "currencyName": "蜀・,
+  "dateFrom": "...",
+  "dateTo": "...",
+  "baseDate": "...",
+  "baseTime": "...",
+  "hasNext": false,
+  "count": 0
+}
+```
+
+**Key Differences from Production**:
+- Production: `{ transactions: [...], nextItemKey?: string }`
+- Sunabar: `{ transactions: [...], hasNext: boolean, count: number, accountId, currencyCode, ... }`
+
+**Schema Compatibility**: 笨・(added `hasNext`, `count`, `accountId`, `currencyCode`, `currencyName`, `dateFrom`, `dateTo` as optional; `nextItemKey` retained for production compatibility)
 
 ---
 
@@ -121,20 +151,15 @@ pnpm sunabar:readonly
 
 ## Quality Gates Passed
 
-- `pnpm typecheck` ✅
-- `pnpm test` (168 tests) ✅
-- `pnpm lint` ✅
-- `pnpm build` ✅
-- `pnpm examples:typecheck` ✅
-
+- `pnpm typecheck` 笨・- `pnpm test` (168 tests) 笨・- `pnpm lint` 笨・- `pnpm build` 笨・- `pnpm examples:typecheck` 笨・
 ---
 
 ## Next Steps
 
-1. **v0.5.1 release** — Include Sunabar field compatibility and validation harness
-2. **Webhook validation** (optional) — Test `va-deposit-transaction` events if time permits
-3. **Write-path validation** — Transfer request (requires approval flow in Sunabar portal)
-4. **Documentation** — Update README with Sunabar quick-start (portal token pattern)
+1. **v0.5.1 release** 窶・Include Sunabar field compatibility and validation harness
+2. **Webhook validation** (optional) 窶・Test `va-deposit-transaction` events if time permits
+3. **Write-path validation** 窶・Transfer request (requires approval flow in Sunabar portal)
+4. **Documentation** 窶・Update README with Sunabar quick-start (portal token pattern)
 
 ---
 
@@ -148,4 +173,6 @@ pnpm sunabar:readonly
 
 **Validated by**: sugukuru  
 **Date**: 2026-05-05 23:50 JST  
-**Status**: ✅ PASS — Ready for community release
+**Status**: 笨・PASS 窶・Ready for community release
+
+|| 6 | Transaction pagination format mismatch | Production uses `nextItemKey`; Sunabar uses `hasNext`/`count` | Added both pagination styles as optional; `.passthrough()` for forward compatibility |
