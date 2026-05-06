@@ -23,6 +23,8 @@ const mode: HarnessMode = process.argv.includes('--execute-readonly')
   ? 'execute-readonly'
   : 'dry-run';
 
+const withTransactions = process.argv.includes('--with-transactions');
+
 const clientId = process.env['GMO_CLIENT_ID'];
 const clientSecret = process.env['GMO_CLIENT_SECRET'];
 const redirectUri = process.env['GMO_REDIRECT_URI'] ?? 'http://localhost:8080/callback';
@@ -156,3 +158,16 @@ console.log('Readonly Sunabar checks completed:', {
   accountId: readonlyAccountId,
   balance: summarizeBalance(balance),
 });
+
+if (withTransactions) {
+  console.log('\nFetching transactions (first page only)...');
+  const txResponse = await readonlyClient.corporation.transactions.list({
+    accountId: readonlyAccountId,
+  });
+  console.log('Transactions response keys:', Object.keys(txResponse));
+  console.log('Transaction count (first page):', txResponse.transactions.length);
+  if (txResponse.transactions.length > 0) {
+    console.log('First transaction sample keys:', Object.keys(txResponse.transactions[0]));
+  }
+  console.log('nextItemKey:', txResponse.nextItemKey ?? 'none (single page)');
+}

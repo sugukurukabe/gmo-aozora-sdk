@@ -90,7 +90,7 @@ export const GetTransactionsResponseSchema = z
     transactions: z.array(TransactionSchema),
     nextItemKey: z.string().optional(),
   })
-  .strict();
+  .passthrough();
 
 export type GetTransactionsResponse = z.infer<typeof GetTransactionsResponseSchema>;
 
