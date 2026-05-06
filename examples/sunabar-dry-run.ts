@@ -293,7 +293,7 @@ if (withTransferRequest) {
           beneficiaryName: 'ﾃｽﾄ ﾕｰｻﾞｰ',
         },
       ],
-      applyComment: 'Sunabar SDK validation test - APPROVE ONLY FOR TESTING',
+      applyComment: 'SDK検証', // must be ≤20 chars (Japanese counts as 1)
     });
 
     console.log('\nTransfer request submitted successfully!');
