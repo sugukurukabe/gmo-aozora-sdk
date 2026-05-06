@@ -39,6 +39,8 @@ const accountId = process.env['GMO_ACCOUNT_ID'];
 const accessToken = process.env['GMO_ACCESS_TOKEN'];
 const refreshToken = process.env['GMO_REFRESH_TOKEN'];
 
+const isPortalTokenMode = !clientId || !clientSecret;
+
 function describeEnv(name: string, value: string | undefined): string {
   return value ? `${name}=set` : `${name}=missing`;
 }
@@ -128,7 +130,6 @@ if (isPortalTokenMode) {
 }
 
 const userId = 'sunabar-validation';
-const isPortalTokenMode = !clientId || !clientSecret;
 
 const storage = new InMemoryTokenStorage();
 await storage.save(userId, {
