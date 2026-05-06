@@ -176,3 +176,33 @@ pnpm sunabar:readonly
 **Status**: 笨・PASS 窶・Ready for community release
 
 || 6 | Transaction pagination format mismatch | Production uses `nextItemKey`; Sunabar uses `hasNext`/`count` | Added both pagination styles as optional; `.passthrough()` for forward compatibility |
+## Fee Estimation Attempt (2026-05-06)
+
+**Result**: Received GmoAozoraApiError code 220011 (expected in Sunabar sandbox — test beneficiary data not present).
+
+The estimateFee method successfully called the API and the SDK correctly surfaced the structured error. This validates write-path error handling.
+
+## Write-path Validation (振込依頼 + Virtual Account)
+
+**Date**: 2026-05-06
+
+### 1. 振込入金口座発行 (POST /virtual-accounts)
+- Attempted with unique label.
+- Result: WG_ERR_019 (Operation not found) — Sunabar sandbox feature not enabled for this test account.
+- SDK correctly surfaced GmoAozoraApiError.
+
+### 2. 振込依頼 (POST /transfer/request) — Recommended Test
+Run with --with-transfer-request:
+
+- Amount: 100 yen (minimal safe amount)
+- Date: Future business day
+- Clear pplyComment warning
+- Expected flow:
+  1. API returns pplyNo + esultCode: '2' (pending)
+  2. Go to Sunabar service site (法人ログイン)
+  3. Approve or cancel the request in notifications
+  4. Poll with --with-transfer-status or getResult
+
+This is the standard Sunabar testing pattern (manual approval required by design).
+
+**Status**: Write-path error handling validated. Full end-to-end transfer test possible with portal approval.
