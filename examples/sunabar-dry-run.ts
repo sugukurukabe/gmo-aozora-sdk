@@ -180,11 +180,23 @@ if (withTransactions) {
 
 if (withVirtualAccounts) {
   console.log('\nFetching virtual accounts (振込入金口座一覧)...');
-  const vaResponse = await readonlyClient.corporation.virtualAccounts.list();
-  console.log('Virtual accounts response keys:', Object.keys(vaResponse));
-  console.log('Virtual account count:', vaResponse.virtualAccounts.length);
-  if (vaResponse.virtualAccounts.length > 0) {
-    console.log('First virtual account sample keys:', Object.keys(vaResponse.virtualAccounts[0]));
+  try {
+    const vaResponse = await readonlyClient.corporation.virtualAccounts.list();
+    console.log('Virtual accounts response keys:', Object.keys(vaResponse));
+    console.log('Virtual account count:', vaResponse.virtualAccounts.length);
+    if (vaResponse.virtualAccounts.length > 0) {
+      console.log('First virtual account sample keys:', Object.keys(vaResponse.virtualAccounts[0]));
+    }
+  } catch (e) {
+    if (e instanceof GmoAozoraValidationError) {
+      console.error('Virtual accounts validation failed. Issues:');
+      console.error(JSON.stringify(e.issues, null, 2));
+    } else if (e instanceof GmoAozoraApiError) {
+      console.error(`Virtual accounts list failed: ${e.code}: ${e.message}`);
+      console.error('(This feature may not be enabled in the current Sunabar sandbox account.)');
+    } else {
+      console.error('Virtual accounts list failed:', String(e));
+    }
   }
 }
 
