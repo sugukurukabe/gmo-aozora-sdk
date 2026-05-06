@@ -138,10 +138,18 @@ const readonlyClient = new GmoAozoraClient({
 }).useUser(userId);
 
 const accounts = await readonlyClient.corporation.accounts.list();
-console.log('Readonly accounts listed:', {
-  accountCount: accounts.length,
-  accounts: summarizeAccounts(accounts),
-});
+  console.log('Readonly accounts listed:', {
+    accountCount: accounts.length,
+    accounts: summarizeAccounts(accounts),
+  });
+
+  // If GMO_ACCOUNT_ID is not provided, show a hint for the user
+  if (!accountId && accounts.length > 0) {
+    console.log('\n[Hint] No GMO_ACCOUNT_ID provided. Auto-selected the first account.');
+    console.log('To use a specific account, set:');
+    console.log(`  $env:GMO_ACCOUNT_ID="${accounts[0].accountId}"   # PowerShell`);
+    console.log(`  export GMO_ACCOUNT_ID="${accounts[0].accountId}" # bash/zsh`);
+  }
 
 const readonlyAccountId = accountId ?? accounts[0]?.accountId;
 if (!readonlyAccountId) {
