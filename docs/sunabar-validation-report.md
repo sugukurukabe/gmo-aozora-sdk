@@ -287,3 +287,38 @@ GmoAozoraApiError: 220011: エラーが発生しました。
 3. If you have access to a "認可利用" enabled corporate test account, run the full OAuth flow (scripts/sunabar-oauth-callback.mjs) and then attempt the transfer request.
 
 All findings have been recorded. The SDK is ready; the remaining gaps are Sunabar sandbox data provisioning, not code issues.
+
+---
+
+## OAuth Token Refresh Support — 2026-05-06 Fix
+
+**Problem discovered**:
+When using a real OAuth PKCE token (with private:offline_access scope), the first API call failed with:
+`
+GmoAozoraAuthError: Token refresh failed after 401.
+`
+
+**Root cause**:
+- The sunabar-dry-run.ts harness was hardcoding efreshToken: '' when storing the token from GMO_ACCESS_TOKEN.
+- OAuth access tokens are short-lived (~1 hour). When the SDK receives a 401, it attempts to refresh using the efresh_token.
+- Without a refresh token, refresh fails immediately.
+
+**Fix applied**:
+1. Added support for GMO_REFRESH_TOKEN environment variable in the harness.
+2. When provided, the refresh token is stored and the SDK can now automatically refresh expired access tokens.
+3. Updated scripts/sunabar-oauth-callback.mjs to also print the efresh_token (when returned by the token endpoint).
+
+**New recommended usage after running the OAuth script**:
+
+`powershell
+# After the OAuth callback script finishes:
+export GMO_ACCESS_TOKEN="..." GMO_REFRESH_TOKEN="..." GMO_CLIENT_ID="..." GMO_CLIENT_SECRET="..."
+
+# Then run any command with the correct account:
+test-account="102010013512"
+pnpm sunabar:readonly --with-transfer-request
+`
+
+This change makes the harness fully compatible with production-style OAuth tokens that require refresh.
+
+**Status**: OAuth token lifecycle (including automatic refresh) is now properly supported in the Sunabar validation harness.
