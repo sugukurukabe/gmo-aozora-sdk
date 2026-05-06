@@ -322,3 +322,42 @@ pnpm sunabar:readonly --with-transfer-request
 This change makes the harness fully compatible with production-style OAuth tokens that require refresh.
 
 **Status**: OAuth token lifecycle (including automatic refresh) is now properly supported in the Sunabar validation harness.
+
+---
+
+## Portal Token vs OAuth Token Clarification — 2026-05-06
+
+**User feedback**: "アクセストークンとリフレッシュなんてないよ"
+
+**Conclusion**:
+The user is using a **Sunabar Portal Token** (issued directly from https://portal.sunabar.gmo-aozora.com after login), **not** an OAuth PKCE token that includes a efresh_token.
+
+Portal tokens are the intended method for initial Sunabar sandbox validation. They do not participate in the OAuth refresh flow.
+
+**Problem that occurred**:
+- When the user changed GMO_ACCOUNT_ID to 102010013512, the existing portal token triggered a 401 (possibly because the token was issued for a different account context or had expired between runs).
+- The harness was treating every token as an OAuth token and attempting refresh, which failed with REFRESH_FAILED.
+
+**Fixes applied to the harness**:
+- Clear mode detection: when GMO_CLIENT_ID / GMO_CLIENT_SECRET are not set → "Sunabar Portal Token mode".
+- In portal mode the harness now prints a friendly message and, on 401, gives exact instructions:
+  > Please go to https://portal.sunabar.gmo-aozora.com, issue a fresh access token, and set it again.
+
+**Correct usage for Portal Token (current user situation)**:
+
+`powershell
+# No CLIENT_ID / CLIENT_SECRET / REFRESH_TOKEN needed
+test-token="eyJ... (copy fresh from portal)"
+test-account="102010013512"
+
+pnpm sunabar:readonly --with-transfer-request
+`
+
+**When to use the OAuth script** (
+ode scripts/sunabar-oauth-callback.mjs):
+- Only when you want to test the **full approval workflow** (esultCode: '2' → notification in service site → transaction password approval).
+- In that case you will receive both ccess_token **and** efresh_token.
+
+All previous read-only successes were done with portal tokens. The write-path tests (transfer request, virtual account creation, etc.) are also valid with portal tokens as long as the token is fresh and the account has the necessary permissions.
+
+**Status**: Harness now correctly distinguishes the two token types and guides the user appropriately.
