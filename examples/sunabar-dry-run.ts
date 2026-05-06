@@ -214,7 +214,8 @@ if (withBulkTransferStatus) {
       dateTo: '2026-05-06',
     });
     console.log('Bulk transfer status response keys:', Object.keys(bulkStatusResponse));
-    console.log('Bulk transfer status list count:', bulkStatusResponse.transferStatusList.length);
+    const list = bulkStatusResponse.transferStatusList ?? [];
+    console.log('Bulk transfer status list count:', list.length);
   } catch (e) {
     if (e instanceof GmoAozoraValidationError) {
       console.error('Bulk transfer status validation failed. Issues:');

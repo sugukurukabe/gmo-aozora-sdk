@@ -461,9 +461,12 @@ export type BulkTransferStatusItem = z.infer<typeof BulkTransferStatusItemSchema
 
 export const BulkTransferStatusResponseSchema = z
   .object({
-    accountId: z.string(),
-    transferStatusList: z.array(BulkTransferStatusItemSchema),
+    // Sunabar may omit these fields when no data is available
+    accountId: z.string().optional(),
+    transferStatusList: z.array(BulkTransferStatusItemSchema).optional(),
     nextItemKey: z.string().optional(),
+    hasNext: z.boolean().optional(),
+    count: z.number().optional(),
   })
   .passthrough();
 

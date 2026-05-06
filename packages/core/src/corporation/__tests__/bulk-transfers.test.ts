@@ -272,7 +272,7 @@ describe('BulkTransfersApi', () => {
       });
 
       expect(result.accountId).toBe('123456789012');
-      expect(result.transferStatusList[0]?.requestTransferStatus).toBe('30');
+      expect(result.transferStatusList?.[0]?.requestTransferStatus).toBe('30');
     });
 
     it('accepts all documented bulk transfer status codes', () => {
