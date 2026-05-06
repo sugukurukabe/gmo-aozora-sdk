@@ -24,6 +24,7 @@ const mode: HarnessMode = process.argv.includes('--execute-readonly')
   : 'dry-run';
 
 const withTransactions = process.argv.includes('--with-transactions');
+const withVirtualAccounts = process.argv.includes('--with-virtual-accounts');
 
 const clientId = process.env['GMO_CLIENT_ID'];
 const clientSecret = process.env['GMO_CLIENT_SECRET'];
@@ -170,6 +171,16 @@ if (withTransactions) {
     console.log('First transaction sample keys:', Object.keys(txResponse.transactions[0]));
   }
   console.log('nextItemKey:', txResponse.nextItemKey ?? 'none (single page)');
+}
+
+if (withVirtualAccounts) {
+  console.log('\nFetching virtual accounts (振込入金口座一覧)...');
+  const vaResponse = await readonlyClient.corporation.virtualAccounts.list();
+  console.log('Virtual accounts response keys:', Object.keys(vaResponse));
+  console.log('Virtual account count:', vaResponse.virtualAccounts.length);
+  if (vaResponse.virtualAccounts.length > 0) {
+    console.log('First virtual account sample keys:', Object.keys(vaResponse.virtualAccounts[0]));
+  }
 }
 
 const estimateFee = process.argv.includes('--estimate-fee');

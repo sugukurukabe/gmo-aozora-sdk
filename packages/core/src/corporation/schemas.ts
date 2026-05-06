@@ -126,7 +126,7 @@ export const VirtualAccountSchema = z
     label: z.string().optional(),
     createdAt: z.string(),
   })
-  .strict();
+  .passthrough();
 
 export type VirtualAccount = z.infer<typeof VirtualAccountSchema>;
 
@@ -134,8 +134,10 @@ export const GetVirtualAccountsResponseSchema = z
   .object({
     virtualAccounts: z.array(VirtualAccountSchema),
     nextItemKey: z.string().optional(),
+    hasNext: z.boolean().optional(),
+    count: z.number().optional(),
   })
-  .strict();
+  .passthrough();
 
 export type GetVirtualAccountsResponse = z.infer<typeof GetVirtualAccountsResponseSchema>;
 
@@ -150,7 +152,7 @@ export const CreateVirtualAccountResponseSchema = z
   .object({
     virtualAccount: VirtualAccountSchema,
   })
-  .strict();
+  .passthrough();
 
 export type CreateVirtualAccountResponse = z.infer<typeof CreateVirtualAccountResponseSchema>;
 
@@ -158,7 +160,7 @@ export const UpdateVirtualAccountStatusResponseSchema = z
   .object({
     virtualAccount: VirtualAccountSchema,
   })
-  .strict();
+  .passthrough();
 
 export type UpdateVirtualAccountStatusResponse = z.infer<
   typeof UpdateVirtualAccountStatusResponseSchema
