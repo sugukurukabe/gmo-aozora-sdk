@@ -139,10 +139,16 @@ console.log('\n=== Token obtained ===');
 console.log('Scope:', tokens.scope);
 console.log('Expires at:', new Date(expiresAt).toISOString());
 console.log('\n--- Run this export, then use pnpm sunabar:readonly ---');
+const refreshPart = tokens.refresh_token
+  ? ` GMO_REFRESH_TOKEN="${tokens.refresh_token}"`
+  : '';
 console.log(
-  `export GMO_ACCESS_TOKEN="${tokens.access_token}" GMO_CLIENT_ID="${CLIENT_ID}" GMO_CLIENT_SECRET="${CLIENT_SECRET}"`,
+  `export GMO_ACCESS_TOKEN="${tokens.access_token}"${refreshPart} GMO_CLIENT_ID="${CLIENT_ID}" GMO_CLIENT_SECRET="${CLIENT_SECRET}"`,
 );
 console.log('\n(Token is NOT saved to disk — copy it now if needed.)');
+if (!tokens.refresh_token) {
+  console.log('(No refresh_token returned — offline_access scope may be missing.)');
+}
 
 // Small delay so the user can read the output
 await delay(500);

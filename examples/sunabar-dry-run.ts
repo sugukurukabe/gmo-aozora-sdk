@@ -36,6 +36,7 @@ const clientSecret = process.env['GMO_CLIENT_SECRET'];
 const redirectUri = process.env['GMO_REDIRECT_URI'] ?? 'http://localhost:8080/callback';
 const accountId = process.env['GMO_ACCOUNT_ID'];
 const accessToken = process.env['GMO_ACCESS_TOKEN'];
+const refreshToken = process.env['GMO_REFRESH_TOKEN'];
 
 function describeEnv(name: string, value: string | undefined): string {
   return value ? `${name}=set` : `${name}=missing`;
@@ -95,12 +96,13 @@ console.log('Mode:', mode);
 console.log(
   'Environment:',
   [
-    describeEnv('GMO_CLIENT_ID', clientId),
-    describeEnv('GMO_CLIENT_SECRET', clientSecret),
-    describeEnv('GMO_REDIRECT_URI', redirectUri),
-    describeEnv('GMO_ACCOUNT_ID', accountId),
-    describeEnv('GMO_ACCESS_TOKEN', accessToken),
-  ].join(', '),
+  describeEnv('GMO_CLIENT_ID', clientId),
+  describeEnv('GMO_CLIENT_SECRET', clientSecret),
+  describeEnv('GMO_REDIRECT_URI', redirectUri),
+  describeEnv('GMO_ACCOUNT_ID', accountId),
+  describeEnv('GMO_ACCESS_TOKEN', accessToken),
+  describeEnv('GMO_REFRESH_TOKEN', refreshToken),
+].join(', '),
 );
 console.log('PKCE session prepared:', {
   stateLength: session.state.length,
@@ -118,12 +120,15 @@ if (mode === 'dry-run') {
 
 const storage = new InMemoryTokenStorage();
 const userId = 'sunabar-validation';
+const resolvedRefreshToken = refreshToken || '';
 await storage.save(userId, {
   accessToken: requireEnv('GMO_ACCESS_TOKEN', accessToken),
-  refreshToken: '',
+  refreshToken: resolvedRefreshToken,
+  // If a refresh token is provided, assume the access token is fresh (1 hour validity).
+  // The SDK will refresh automatically when needed.
   expiresAt: Date.now() + 3_600_000,
   tokenType: 'Bearer',
-  scope: PRIVATE_SCOPES.ACCOUNT,
+  scope: PRIVATE_SCOPES.ACCOUNT + ' ' + PRIVATE_SCOPES.OFFLINE_ACCESS,
 });
 
 const readonlyClient = new GmoAozoraClient({
