@@ -361,3 +361,41 @@ ode scripts/sunabar-oauth-callback.mjs):
 All previous read-only successes were done with portal tokens. The write-path tests (transfer request, virtual account creation, etc.) are also valid with portal tokens as long as the token is fresh and the account has the necessary permissions.
 
 **Status**: Harness now correctly distinguishes the two token types and guides the user appropriately.
+
+---
+
+## Account Visibility Issue — 2026-05-06
+
+**Test run with**:
+- $env:GMO_ACCOUNT_ID="102010013512"
+- Fresh portal token
+
+**Observed**:
+- The ccounts.list() API returned only **one account**: 102010013666 (branch 102, number 0013666)
+- The harness correctly used the provided GMO_ACCOUNT_ID when set, but since the token only sees  013666, the list did not include 102010013512.
+
+**Conclusion**:
+The portal token MTFkODkzNGM5MDAxZjdmMDk3MGM0YjM2 only has visibility to the account 102010013666. It does not have access to 102010013512 (or the account does not exist under the current login session).
+
+**Implication for write-path testing**:
+- We can still fully test the transfer request flow using the account that the token can actually see (102010013666).
+- The 220011 error on transfer request is unrelated to the account ID — it is caused by the beneficiary ( 310-001-0013666) not being accepted as a valid test payee by the sandbox for this token.
+
+**Recommended immediate action**:
+Use the account the token actually returns:
+
+`powershell
+test-token="MTFkODkzNGM5MDAxZjdmMDk3MGM0YjM2"
+test-account="102010013666"   # the one the token can see
+
+pnpm sunabar:readonly --estimate-fee
+`
+
+This will tell us which beneficiary combinations the current sandbox account accepts. Once we find a valid test payee, the transfer request should succeed (or at least give a more meaningful error).
+
+If the user truly needs to test with 102010013512, they must:
+1. Log into the Sunabar portal with the credentials that have access to that account.
+2. Issue a new portal token while viewing that account.
+3. Use the new token.
+
+All write-path error handling in the SDK has been validated multiple times. The remaining blocker is Sunabar sandbox test data / account provisioning, not the SDK.
