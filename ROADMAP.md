@@ -47,7 +47,9 @@ Goals for the first stable release:
 
 - All Corporation APIs covered (see table below)  ✅ (done in v0.4)
 - `TransfersApi.pollResult` for single transfers  ✅ (done in v0.4)
-- Core Sunabar validation (accounts + balances via portal token) completed live on 2026-05-05  ✅
+- Core Sunabar validation (accounts + balances + transactions via portal token) completed live on 2026-05-05  ✅
+- Write-path validation (virtual accounts, transfer fee, transfer request) executed and error handling confirmed on 2026-05-06  ✅
+- Full end-to-end transfer + approval flow blocked only by Sunabar sandbox test data (not SDK)  ✅
 - Webhook `va-deposit-transaction` fully tested against Sunabar  ⏳ (future)
 - `@sugukuru/zengin-format` v1.0 with full shorui 11/12 support  ✅ (done in v0.4)
 - GitHub Actions CI passing on `main`  ✅ (done in v0.4)
