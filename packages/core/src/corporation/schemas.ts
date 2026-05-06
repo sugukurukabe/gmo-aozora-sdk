@@ -299,7 +299,7 @@ export const TransferFeeDetailSchema = z
     /** 個別振込手数料 — numeric string. */
     transferFee: z.string(),
   })
-  .strict();
+  .passthrough();
 
 export type TransferFeeDetail = z.infer<typeof TransferFeeDetailSchema>;
 
@@ -312,7 +312,7 @@ export const TransferFeeResponseSchema = z
     totalFee: z.string(),
     transferFeeDetails: z.array(TransferFeeDetailSchema),
   })
-  .strict();
+  .passthrough();
 
 export type TransferFeeResponse = z.infer<typeof TransferFeeResponseSchema>;
 

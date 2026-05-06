@@ -171,3 +171,34 @@ if (withTransactions) {
   }
   console.log('nextItemKey:', txResponse.nextItemKey ?? 'none (single page)');
 }
+
+const estimateFee = process.argv.includes('--estimate-fee');
+if (estimateFee) {
+  console.log('\nEstimating transfer fee (read-only, no actual transfer)...');
+  try {
+    const fee = await readonlyClient.corporation.transfers.estimateFee({
+      accountId: readonlyAccountId,
+      transferDesignatedDate: '2026-05-07', // future business day
+      transferDateHolidayCode: '1',
+      transfers: [
+        {
+          itemId: '1',
+          transferAmount: '10000',
+          beneficiaryBankCode: '0310', // GMO Aozora
+          beneficiaryBankName: 'GMOあおぞら',
+          beneficiaryBranchCode: '001',
+          beneficiaryBranchName: '本店',
+          accountTypeCode: '1',
+          accountNumber: '1234567',
+          beneficiaryName: 'ﾃｽﾄ ｼﾞｭｼｮﾆﾝ',
+        },
+      ],
+    });
+    console.log('Fee estimate response keys:', Object.keys(fee));
+    console.log('Total fee:', fee.totalFee);
+    console.log('Detail count:', fee.transferFeeDetails.length);
+  } catch (e) {
+    const message = e instanceof GmoAozoraApiError ? `${e.code}: ${e.message}` : String(e);
+    console.error('Fee estimation failed (may require specific test data in Sunabar):', message);
+  }
+}
